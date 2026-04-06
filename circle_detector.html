@@ -1,77 +1,311 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>丸棒カウントPro</title>
-    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
-    <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
-        video { width: 100vw; height: 100vh; object-fit: cover; }
-        canvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; }
-        .ui { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
-              background: rgba(0,0,0,0.8); color: #fff; padding: 15px 30px; 
-              border-radius: 40px; font-size: 28px; font-weight: bold; white-space: nowrap; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>丸棒カウンター</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html, body {
+    width:100%; height:100%;
+    background:#000;
+    overflow:hidden;
+    font-family: 'Arial Black', Arial, sans-serif;
+  }
+
+  /* カメラ映像 — フルスクリーン */
+  #video {
+    position:fixed; inset:0;
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+  }
+
+  /* 検知結果を重ねる canvas */
+  #overlay {
+    position:fixed; inset:0;
+    width:100%; height:100%;
+    pointer-events:none;
+  }
+
+  /* カウント表示 */
+  #count-box {
+    position:fixed;
+    top:0; left:0; right:0;
+    text-align:center;
+    padding:14px 0 10px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.72), transparent);
+    pointer-events:none;
+    z-index:10;
+  }
+  #count-label {
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:0.15em;
+    color:rgba(255,255,255,0.7);
+    text-transform:uppercase;
+  }
+  #count-num {
+    font-size:88px;
+    font-weight:900;
+    color:#fff;
+    line-height:1;
+    text-shadow: 0 0 24px rgba(255,80,80,0.8), 0 2px 8px rgba(0,0,0,0.9);
+    letter-spacing:-2px;
+  }
+
+  /* ステータス（CV読み込み中など） */
+  #status {
+    position:fixed;
+    bottom:24px; left:50%;
+    transform:translateX(-50%);
+    background:rgba(0,0,0,0.65);
+    color:#fff;
+    font-size:13px;
+    padding:7px 20px;
+    border-radius:20px;
+    letter-spacing:0.08em;
+    z-index:10;
+    transition:opacity 0.5s;
+  }
+  #status.hidden { opacity:0; pointer-events:none; }
+
+  /* カメラ許可ボタン（起動前） */
+  #start-btn {
+    position:fixed; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    background:#111;
+    color:#fff;
+    z-index:20;
+    gap:16px;
+    cursor:pointer;
+    border:none;
+    width:100%; height:100%;
+  }
+  #start-btn svg { width:60px; height:60px; stroke:#ff4444; stroke-width:1.5; fill:none; }
+  #start-btn span { font-size:18px; font-weight:700; letter-spacing:0.1em; }
+  #start-btn small { font-size:12px; color:#888; letter-spacing:0.05em; }
+</style>
 </head>
 <body>
-    <div class="ui" id="status">読込中...</div>
-    <video id="video" autoplay playsinline style="display:none;"></video>
-    <canvas id="canvas"></canvas>
 
-    <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const status = document.getElementById('status');
-        let src, gray, circles;
+<!-- 起動前 -->
+<button id="start-btn">
+  <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9"/>
+    <circle cx="12" cy="12" r="4"/>
+    <line x1="12" y1="2" x2="12" y2="4"/>
+    <line x1="12" y1="20" x2="12" y2="22"/>
+    <line x1="2" y1="12" x2="4" y2="12"/>
+    <line x1="20" y1="12" x2="22" y2="12"/>
+  </svg>
+  <span>タップしてカメラを起動</span>
+  <small>丸棒断面カウンター — 屋外・真上撮影用</small>
+</button>
 
-        // カメラ起動
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then(stream => { video.srcObject = stream; video.play(); });
+<!-- カメラ映像 -->
+<video id="video" autoplay playsinline muted></video>
 
-        function process() {
-            if (!window.cv || !cv.Mat) {
-                setTimeout(process, 100);
-                return;
-            }
-            
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            
-            src = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
-            gray = new cv.Mat();
-            circles = new cv.Mat();
+<!-- 検知オーバーレイ -->
+<canvas id="overlay"></canvas>
 
-            const loop = () => {
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                src.data.set(ctx.getImageData(0, 0, canvas.width, canvas.height).data);
-                
-                cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-                cv.GaussianBlur(gray, gray, new cv.Size(9, 9), 2, 2);
-                
-                // 円検知 (パラメータ: 最小距離, 感度, 正確さ, 最小半径, 最大半径)
-                cv.HoughCircles(gray, circles, cv.HOUGH_GRADIENT, 1, 30, 80, 35, 5, 40);
+<!-- カウント -->
+<div id="count-box">
+  <div id="count-label">検知数</div>
+  <div id="count-num">—</div>
+</div>
 
-                let count = circles.cols;
-                for (let i = 0; i < count; ++i) {
-                    let x = circles.data32F[i * 3];
-                    let y = circles.data32F[i * 3 + 1];
-                    let r = circles.data32F[i * 3 + 2];
-                    ctx.beginPath();
-                    ctx.arc(x, y, r, 0, 2 * Math.PI);
-                    ctx.strokeStyle = 'red';
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
-                }
-                
-                status.innerText = `カウント: ${count} 本`;
-                requestAnimationFrame(loop);
-            };
-            loop();
-        }
+<!-- ステータス -->
+<div id="status">OpenCV 読み込み中…</div>
 
-        video.oncanplay = () => { process(); };
-    </script>
+<!-- 処理用 (非表示) -->
+<canvas id="proc" style="display:none"></canvas>
+
+<script async src="https://docs.opencv.org/4.8.0/opencv.js"
+  onload="onCvReady()" onerror="onCvError()"></script>
+<script>
+// ─── 設定 ────────────────────────────────────────────────
+// 屋外・明るい環境・真上撮影・丸棒断面向け最適パラメータ
+const CFG = {
+  procW:     480,   // 処理解像度（横）※ここを下げるほど軽い
+  procH:     360,   // 処理解像度（縦）
+  skipFrames: 3,    // N フレームに 1 回解析（2〜4 推奨）
+  // HoughCircles
+  dp:        1.8,   // 逆解像度比（大きいほど速い・粗い）
+  minDist:   28,    // 円の中心間 最小距離 px（処理解像度基準）
+  param1:    60,    // Canny 上限閾値（屋外の明るさ想定で低め）
+  param2:    22,    // 投票閾値（低め＝感度高・屋外ハッキリ輪郭向け）
+  minRadius: 8,     // 最小半径 px（処理解像度基準）
+  maxRadius: 90,    // 最大半径 px（処理解像度基準）
+  // GaussianBlur
+  blurK:     7,     // カーネルサイズ（奇数）
+};
+// ─────────────────────────────────────────────────────────
+
+const video    = document.getElementById('video');
+const overlay  = document.getElementById('overlay');
+const proc     = document.getElementById('proc');
+const countNum = document.getElementById('count-num');
+const status   = document.getElementById('status');
+const startBtn = document.getElementById('start-btn');
+
+const octx = overlay.getContext('2d');
+const pctx = proc.getContext('2d', { willReadFrequently: true });
+
+let cvReady   = false;
+let running   = false;
+let frameN    = 0;
+let lastCount = -1;
+
+proc.width  = CFG.procW;
+proc.height = CFG.procH;
+
+// ── OpenCV ──────────────────────────────────────────────
+function onCvReady() {
+  cvReady = true;
+  setStatus('準備完了', 1500);
+}
+function onCvError() {
+  setStatus('OpenCV 読み込み失敗', 0);
+}
+
+// ── カメラ起動 ───────────────────────────────────────────
+startBtn.addEventListener('click', async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' }, // リアカメラ優先
+        width:  { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+      audio: false,
+    });
+    video.srcObject = stream;
+    await video.play();
+    startBtn.style.display = 'none';
+
+    // overlay を video と同サイズに
+    const resize = () => {
+      overlay.width  = window.innerWidth;
+      overlay.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    running = true;
+    requestAnimationFrame(loop);
+    setStatus('検知中…', 2000);
+  } catch(e) {
+    setStatus('カメラ許可が必要です', 0);
+  }
+});
+
+// ── メインループ ─────────────────────────────────────────
+function loop() {
+  if (!running) return;
+  requestAnimationFrame(loop);
+
+  frameN++;
+  if (frameN % CFG.skipFrames !== 0) return;
+  if (!cvReady || video.readyState < 2) return;
+
+  detect();
+}
+
+function detect() {
+  // 縮小して描画
+  pctx.drawImage(video, 0, 0, CFG.procW, CFG.procH);
+
+  let src, gray, circ;
+  try {
+    src  = cv.imread(proc);
+    gray = new cv.Mat();
+    circ = new cv.Mat();
+
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+    cv.GaussianBlur(gray, gray, new cv.Size(CFG.blurK, CFG.blurK), 0);
+    cv.HoughCircles(
+      gray, circ, cv.HOUGH_GRADIENT,
+      CFG.dp, CFG.minDist,
+      CFG.param1, CFG.param2,
+      CFG.minRadius, CFG.maxRadius
+    );
+
+    drawResults(circ);
+
+  } catch(e) {
+    console.warn(e);
+  } finally {
+    if (src)  src.delete();
+    if (gray) gray.delete();
+    if (circ) circ.delete();
+  }
+}
+
+// ── 描画（処理座標 → 表示座標へスケール） ──────────────
+function drawResults(circ) {
+  const ow = overlay.width;
+  const oh = overlay.height;
+  const sx = ow / CFG.procW;  // x スケール
+  const sy = oh / CFG.procH;  // y スケール
+
+  octx.clearRect(0, 0, ow, oh);
+
+  const n = circ.cols;
+
+  for (let i = 0; i < n; i++) {
+    const cx = circ.data32F[i * 3]     * sx;
+    const cy = circ.data32F[i * 3 + 1] * sy;
+    const r  = circ.data32F[i * 3 + 2] * ((sx + sy) / 2);
+
+    // 外側グロー
+    octx.beginPath();
+    octx.arc(cx, cy, r + 4, 0, Math.PI * 2);
+    octx.strokeStyle = 'rgba(255,60,60,0.25)';
+    octx.lineWidth   = 8;
+    octx.stroke();
+
+    // メインの赤い円
+    octx.beginPath();
+    octx.arc(cx, cy, r, 0, Math.PI * 2);
+    octx.strokeStyle = '#ff2222';
+    octx.lineWidth   = 4;
+    octx.stroke();
+
+    // 中心点
+    octx.beginPath();
+    octx.arc(cx, cy, 4, 0, Math.PI * 2);
+    octx.fillStyle = '#ff2222';
+    octx.fill();
+
+    // 番号ラベル
+    const fontSize = Math.max(12, r * 0.55);
+    octx.font      = `bold ${fontSize}px Arial`;
+    octx.textAlign = 'center';
+    octx.textBaseline = 'middle';
+    octx.fillStyle = 'rgba(0,0,0,0.6)';
+    octx.fillText(i + 1, cx + 1, cy + 1);
+    octx.fillStyle = '#ffffff';
+    octx.fillText(i + 1, cx, cy);
+  }
+
+  // カウント更新（変化した時だけ）
+  if (n !== lastCount) {
+    countNum.textContent = n > 0 ? n : '0';
+    lastCount = n;
+  }
+}
+
+// ── ヘルパー ──────────────────────────────────────────
+function setStatus(msg, hideAfter) {
+  status.textContent = msg;
+  status.classList.remove('hidden');
+  if (hideAfter > 0) {
+    setTimeout(() => status.classList.add('hidden'), hideAfter);
+  }
+}
+</script>
 </body>
 </html>
