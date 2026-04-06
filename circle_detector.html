@@ -3,51 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>丸棒速攻カウント</title>
+    <title>丸棒カウントPro</title>
+    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
         video { width: 100vw; height: 100vh; object-fit: cover; }
         canvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; }
-        #info { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
-                background: rgba(0,0,0,0.7); color: #fff; padding: 10px 20px; 
-                border-radius: 30px; font-size: 24px; font-weight: bold; pointer-events: none; }
+        .ui { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
+              background: rgba(0,0,0,0.8); color: #fff; padding: 15px 30px; 
+              border-radius: 40px; font-size: 28px; font-weight: bold; white-space: nowrap; }
     </style>
 </head>
 <body>
-    <div id="info">準備中...</div>
-    <video id="video" autoplay playsinline></video>
+    <div class="ui" id="status">読込中...</div>
+    <video id="video" autoplay playsinline style="display:none;"></video>
     <canvas id="canvas"></canvas>
 
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const info = document.getElementById('info');
-        const ctx = canvas.getContext('2d');
+        const status = document.getElementById('status');
+        let src, gray, circles;
 
-        // 自動で背面カメラを起動
-        navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } 
-        }).then(stream => {
-            video.srcObject = stream;
-            requestAnimationFrame(tick);
-        });
+        // カメラ起動
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => { video.srcObject = stream; video.play(); });
 
-        function tick() {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                // 簡易的な円検知ロジック（軽量版）
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                // ※ここでは描画処理をメインに行い、計算負荷を下げています
-                
-                // カウント結果の表示（デモとして固定ロジックを軽量化）
-                // 現場の環境に合わせてこの数値をAIでさらに追い込めます
-                info.innerText = `カウント: 解析中`; 
+        function process() {
+            if (!window.cv || !cv.Mat) {
+                setTimeout(process, 100);
+                return;
             }
-            requestAnimationFrame(tick);
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            
+            src = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
+            gray = new cv.Mat();
+            circles = new cv.Mat();
+
+            const loop = () => {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                src.data.set(ctx.getImageData(0, 0, canvas.width, canvas.height).data);
+                
+                cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+                cv.GaussianBlur(gray, gray, new cv.Size(9, 9), 2, 2);
+                
+                // 円検知 (パラメータ: 最小距離, 感度, 正確さ, 最小半径, 最大半径)
+                cv.HoughCircles(gray, circles, cv.HOUGH_GRADIENT, 1, 30, 80, 35, 5, 40);
+
+                let count = circles.cols;
+                for (let i = 0; i < count; ++i) {
+                    let x = circles.data32F[i * 3];
+                    let y = circles.data32F[i * 3 + 1];
+                    let r = circles.data32F[i * 3 + 2];
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, 2 * Math.PI);
+                    ctx.strokeStyle = 'red';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+                
+                status.innerText = `カウント: ${count} 本`;
+                requestAnimationFrame(loop);
+            };
+            loop();
         }
+
+        video.oncanplay = () => { process(); };
     </script>
 </body>
 </html>
