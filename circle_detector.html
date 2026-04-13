@@ -11,106 +11,118 @@
 
   /* ── 起動画面 ── */
   #home{
-    position:fixed;inset:0;z-index:30;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:#111;gap:0;
+    position:fixed;inset:0;z-index:30;background:#111;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
   }
   #home h1{font-size:22px;color:#fff;letter-spacing:.12em;margin-bottom:4px;}
-  #home p{font-size:12px;color:#555;letter-spacing:.06em;margin-bottom:52px;}
-
+  #home p{font-size:12px;color:#555;margin-bottom:48px;}
   .big-btn{
-    width:240px;padding:18px 0;border:none;border-radius:6px;
-    font-size:17px;font-weight:900;letter-spacing:.1em;cursor:pointer;
+    width:250px;padding:18px 0;border:none;border-radius:6px;
+    font-size:17px;font-weight:900;letter-spacing:.08em;cursor:pointer;
     display:flex;align-items:center;justify-content:center;gap:10px;
-    transition:filter .12s;-webkit-appearance:none;
+    -webkit-appearance:none;transition:filter .12s;
   }
   .big-btn:active{filter:brightness(.75);}
   #btn-camera {background:#ff2222;color:#fff;margin-bottom:14px;}
   #btn-gallery{background:#1e1e1e;color:#bbb;border:1px solid #333;}
-  .big-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .big-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   #input-camera,#input-gallery{display:none;}
+  #cv-badge{
+    margin-top:36px;font-size:11px;letter-spacing:.08em;
+    padding:5px 14px;border-radius:20px;border:1px solid #333;color:#555;
+  }
+  #cv-badge.ok{color:#00cc66;border-color:#00cc66;}
+  #cv-badge.err{color:#f44;border-color:#f44;}
 
   /* ── 結果画面 ── */
-  #result-screen{
-    position:fixed;inset:0;z-index:20;
-    display:none;flex-direction:column;background:#000;
-  }
+  #result-screen{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;background:#000;}
 
   /* カウントバー */
   #count-bar{
-    flex-shrink:0;background:rgba(0,0,0,.88);
-    text-align:center;padding:10px 0 6px;
+    flex-shrink:0;background:rgba(0,0,0,.92);text-align:center;
+    padding:10px 0 6px;border-bottom:1px solid #1a1a1a;
   }
-  #count-label{font-size:12px;color:rgba(255,255,255,.5);letter-spacing:.18em;}
+  #count-label{font-size:11px;color:rgba(255,255,255,.45);letter-spacing:.2em;}
   #count-num{
-    font-size:88px;font-weight:900;line-height:1;color:#fff;
-    text-shadow:0 0 30px rgba(255,40,40,.85),0 2px 10px rgba(0,0,0,1);
+    font-size:96px;font-weight:900;line-height:1;color:#fff;
+    text-shadow:0 0 30px rgba(255,40,40,.8),0 2px 10px rgba(0,0,0,1);
     letter-spacing:-3px;
   }
 
-  /* 感度スライダーエリア */
-  #slider-bar{
-    flex-shrink:0;
-    background:rgba(0,0,0,.75);
-    display:flex;align-items:center;gap:12px;
-    padding:8px 18px;border-top:1px solid #222;
+  /* コントロールバー */
+  #ctrl-bar{
+    flex-shrink:0;background:rgba(0,0,0,.85);
+    display:flex;align-items:center;gap:10px;
+    padding:9px 14px;border-bottom:1px solid #1a1a1a;
+    flex-wrap:wrap;
   }
-  #slider-bar label{
-    font-size:11px;color:#888;letter-spacing:.08em;
-    white-space:nowrap;flex-shrink:0;
+  .ctrl-group{display:flex;align-items:center;gap:7px;flex:1;min-width:130px;}
+  .ctrl-label{font-size:10px;color:#666;letter-spacing:.06em;white-space:nowrap;}
+
+  /* スライダーに目盛り付き */
+  .slider-wrap{flex:1;display:flex;flex-direction:column;gap:2px;}
+  input[type=range]{
+    -webkit-appearance:none;width:100%;height:3px;background:#333;border-radius:2px;outline:none;cursor:pointer;
   }
-  #sens-slider{
-    -webkit-appearance:none;flex:1;height:3px;
-    background:linear-gradient(to right,#ff2222 var(--pct,50%),#333 var(--pct,50%));
-    border-radius:2px;outline:none;cursor:pointer;
-  }
-  #sens-slider::-webkit-slider-thumb{
+  input[type=range]::-webkit-slider-thumb{
     -webkit-appearance:none;width:22px;height:22px;border-radius:50%;
-    background:#ff2222;border:3px solid #111;box-shadow:0 0 6px rgba(255,34,34,.6);
+    background:#ff2222;border:2px solid #111;
   }
-  #sens-val{
-    font-size:12px;color:#ff2222;font-weight:700;
-    min-width:24px;text-align:right;flex-shrink:0;
+  .ctrl-val{font-size:11px;color:#ff2222;font-weight:700;min-width:28px;text-align:right;}
+
+  .run-btn{
+    background:#ff2222;color:#fff;border:none;
+    font-size:12px;font-weight:700;letter-spacing:.06em;
+    padding:9px 18px;border-radius:4px;cursor:pointer;white-space:nowrap;flex-shrink:0;
   }
-  #rerun-btn{
-    flex-shrink:0;background:#ff2222;color:#fff;border:none;
-    font-size:12px;font-weight:700;letter-spacing:.08em;
-    padding:7px 14px;border-radius:4px;cursor:pointer;
-    white-space:nowrap;
+  .run-btn:active{filter:brightness(.75);}
+
+  #preview-toggle{
+    background:#1a1a1a;color:#777;border:1px solid #333;
+    font-size:11px;font-weight:700;letter-spacing:.04em;
+    padding:8px 12px;border-radius:4px;cursor:pointer;white-space:nowrap;flex-shrink:0;
   }
-  #rerun-btn:active{filter:brightness(.75);}
+  #preview-toggle.active{background:#001a00;color:#0f0;border-color:#0f0;}
+
+  /* ヒント */
+  #hint{
+    flex-shrink:0;background:#1a1100;border-bottom:1px solid #332200;
+    padding:5px 14px;font-size:10px;color:#aa7700;letter-spacing:.04em;
+    display:none;
+  }
 
   /* 画像エリア */
-  #img-wrap{
-    flex:1;position:relative;overflow:hidden;
-    display:flex;align-items:center;justify-content:center;
-  }
+  #img-wrap{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000;}
   #photo{max-width:100%;max-height:100%;object-fit:contain;display:block;}
   #overlay{position:absolute;top:0;left:0;pointer-events:none;}
 
   /* スピナー */
   #spinner{
-    position:absolute;inset:0;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:rgba(0,0,0,.6);z-index:10;gap:14px;
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.65);z-index:10;gap:12px;
   }
-  #spinner svg{width:52px;height:52px;animation:spin .85s linear infinite;}
-  #spinner p{font-size:13px;color:#aaa;letter-spacing:.1em;}
+  #spinner svg{width:48px;height:48px;animation:spin .85s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
   #spinner.hidden{display:none;}
+  #spinner-msg{font-size:13px;color:#aaa;letter-spacing:.08em;}
 
-  /* 戻るボタン */
-  #back-btn{
-    position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
-    background:rgba(0,0,0,.72);border:1px solid #444;color:#ccc;
-    font-size:13px;font-weight:700;letter-spacing:.1em;
-    padding:11px 32px;border-radius:28px;cursor:pointer;z-index:10;
+  /* エラー */
+  #err-box{
+    position:absolute;bottom:70px;left:50%;transform:translateX(-50%);
+    background:rgba(160,0,0,.9);color:#fff;font-size:12px;
+    padding:8px 18px;border-radius:6px;letter-spacing:.05em;
+    white-space:nowrap;display:none;z-index:11;
   }
-  #back-btn:active{background:rgba(255,34,34,.4);}
 
-  #cv-tag{position:fixed;bottom:6px;right:8px;z-index:40;
-    font-size:9px;color:#444;letter-spacing:.04em;}
+  #back-btn{
+    position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
+    background:rgba(0,0,0,.72);border:1px solid #444;color:#ccc;
+    font-size:13px;font-weight:700;letter-spacing:.08em;
+    padding:10px 28px;border-radius:26px;cursor:pointer;z-index:10;
+  }
+  #back-btn:active{background:rgba(255,34,34,.35);}
+
+  #cv-tag{position:fixed;bottom:6px;right:8px;z-index:40;font-size:9px;color:#333;}
 </style>
 </head>
 <body>
@@ -118,8 +130,7 @@
 <!-- 起動画面 -->
 <div id="home">
   <h1>丸棒カウンター</h1>
-  <p>φ5〜35mm 対応 ／ 最大500本</p>
-
+  <p>φ5〜35mm対応 ／ 最大500本</p>
   <button class="big-btn" id="btn-camera">
     <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
     撮影して計数
@@ -128,8 +139,8 @@
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
     アルバムから選択
   </button>
+  <div id="cv-badge">OpenCV 読み込み中…</div>
 </div>
-
 <input type="file" id="input-camera"  accept="image/*" capture="environment">
 <input type="file" id="input-gallery" accept="image/*">
 
@@ -140,13 +151,29 @@
     <div id="count-num">—</div>
   </div>
 
-  <!-- 感度スライダー -->
-  <div id="slider-bar">
-    <label>感度</label>
-    <input type="range" id="sens-slider" min="1" max="9" step="1" value="5">
-    <span id="sens-val">5</span>
-    <button id="rerun-btn">再解析</button>
+  <div id="ctrl-bar">
+    <!-- 厳格度スライダー（高い=誤検知減） -->
+    <div class="ctrl-group">
+      <span class="ctrl-label">厳格度</span>
+      <div class="slider-wrap">
+        <input type="range" id="sl-strict" min="1" max="9" value="5">
+      </div>
+      <span class="ctrl-val" id="vl-strict">5</span>
+    </div>
+    <!-- 間隔スライダー -->
+    <div class="ctrl-group">
+      <span class="ctrl-label">棒の間隔</span>
+      <div class="slider-wrap">
+        <input type="range" id="sl-dist" min="1" max="9" value="4">
+      </div>
+      <span class="ctrl-val" id="vl-dist">4</span>
+    </div>
+    <button class="run-btn" id="rerun-btn">再解析</button>
+    <button id="preview-toggle">エッジ確認</button>
   </div>
+
+  <!-- チューニングヒント -->
+  <div id="hint" id="hint"></div>
 
   <div id="img-wrap">
     <img id="photo" alt="">
@@ -157,205 +184,310 @@
       </svg>
       <p id="spinner-msg">解析中…</p>
     </div>
+    <div id="err-box"></div>
   </div>
   <button id="back-btn">← 撮り直す</button>
 </div>
 
-<div id="cv-tag">CV …</div>
 <canvas id="proc" style="display:none"></canvas>
+<div id="cv-tag">CV…</div>
 
 <script async src="https://docs.opencv.org/4.8.0/opencv.js"
   onload="onCvReady()" onerror="onCvError()"></script>
 <script>
-// ── 感度レベル → param2 のマッピング ──────────────────────
-// 感度1（最小検知）= param2高 → 感度9（最大検知）= param2低
-// param2 が低いほど多く検知する
-const SENS_MAP = [null, 45, 38, 30, 24, 18, 14, 10, 7, 5];
-//                       1   2   3   4   5   6   7  8  9
+// ─────────────────────────────────────────────────────────
+// パラメータ設計方針
+//  ・equalizeHist は廃止（ノイズ増幅の原因）
+//  ・デフォルトは「厳しめ」。丸棒がある写真で感度を上げる
+//  ・param2（accumulator threshold）= 高いほど誤検知が減る
+//
+// 厳格度レベル → param2 (高い=厳格・誤検知少, 低い=緩い・検知多)
+const STRICT_P2 = [null, 20, 26, 33, 42, 52, 63, 75, 88, 105];
+//                       1   2   3   4   5   6   7   8   9
+// デフォルト: 5 (param2=52) ← 明確な円形のみ検知
 
-// ── 固定パラメータ（φ5〜35mm、真上撮影、屋外向け） ──────
-const CFG = {
-  procW:     800,   // 処理解像度（精度と速度のバランス）
-  procH:     600,
-  dp:        1.2,   // 解像度比（小さいほど精密）
-  // minDist は写真幅に対する割合で動的計算（後述）
-  minDistRatio: 0.022,  // 処理幅の約2.2%（密集した束に対応）
-  param1:    50,    // Canny閾値（屋外の明瞭な輪郭向け）
-  // param2 は感度スライダーで制御
-  minRadius: 4,     // φ5mm相当（処理解像度基準）
-  maxRadius: 130,   // φ35mm相当（処理解像度基準）
-  blurK:     5,     // GaussianBlurカーネル
-};
+// 間隔レベル → minDist (処理幅800px基準)
+const DIST_MD   = [null, 5, 8, 12, 17, 22, 28, 36, 46, 58];
+//                      1  2   3   4   5   6   7   8   9
+// デフォルト: 4 (minDist=17)
 
-let cvReady = false;
-let currentImageLoaded = false;
+// 固定パラメータ
+const PROC_W  = 800;
+const PROC_H  = 600;
+const PARAM1  = 80;   // Canny上限（高め＝輪郭がくっきりの場合のみ反応）
+const BLUR_K  = 7;    // GaussianBlurカーネル（大きめでノイズ除去）
+const DP      = 1.5;  // dp（1.5で速度と精度のバランス）
+const MIN_R   = 5;    // 最小半径px
+const MAX_R   = 110;  // 最大半径px
 
-const $ = id => document.getElementById(id);
-const cvTag       = $('cv-tag');
-const home        = $('home');
-const resultScreen= $('result-screen');
-const photo       = $('photo');
-const overlay     = $('overlay');
-const spinner     = $('spinner');
-const spinnerMsg  = $('spinner-msg');
-const countNum    = $('count-num');
-const sensSlider  = $('sens-slider');
-const sensVal     = $('sens-val');
-const proc        = $('proc');
-const pctx        = proc.getContext('2d', {willReadFrequently:true});
-const octx        = overlay.getContext('2d');
+// ─────────────────────────────────────────────────────────
+let cvReady   = false;
+let imgLoaded = false;
+let showEdge  = false;
+let lastCircData = null; // Float32Array のコピー（Mat削除後も使える）
+let lastCircCols = 0;
 
-function onCvReady(){ cvReady=true; cvTag.textContent='CV OK';
-  if(currentImageLoaded) detect(); }
-function onCvError(){ cvTag.textContent='CV ERR'; cvTag.style.color='#f44'; }
+const $  = id => document.getElementById(id);
+const home         = $('home');
+const cvBadge      = $('cv-badge');
+const resultScreen = $('result-screen');
+const photo        = $('photo');
+const overlay      = $('overlay');
+const spinner      = $('spinner');
+const spinnerMsg   = $('spinner-msg');
+const countNum     = $('count-num');
+const errBox       = $('err-box');
+const hint         = $('hint');
+const proc         = $('proc');
+const pctx         = proc.getContext('2d', {willReadFrequently:true});
+const octx         = overlay.getContext('2d');
+const previewToggle= $('preview-toggle');
 
-// 感度スライダー
-sensSlider.addEventListener('input', ()=>{
-  sensVal.textContent = sensSlider.value;
-  const pct = ((sensSlider.value - 1) / 8 * 100).toFixed(0);
-  sensSlider.style.setProperty('--pct', pct + '%');
+// OpenCV
+function onCvReady(){
+  cvReady=true;
+  cvBadge.textContent='OpenCV 準備完了';
+  cvBadge.className='ok';
+  $('cv-tag').textContent='CV OK';
+  if(imgLoaded){ spinnerMsg.textContent='解析中…'; runDetect(); }
+}
+function onCvError(){
+  cvBadge.textContent='OpenCV 読み込み失敗';
+  cvBadge.className='err';
+  $('cv-tag').textContent='CV ERR';
+  showErr('OpenCV の読み込みに失敗しました');
+  spinner.classList.add('hidden');
+}
+
+// スライダー
+['strict','dist'].forEach(key=>{
+  const sl=$('sl-'+key), vl=$('vl-'+key);
+  sl.addEventListener('input',()=>{ vl.textContent=sl.value; });
 });
 
-// ── ボタン ──
-$('btn-camera') .addEventListener('click', ()=>$('input-camera') .click());
-$('btn-gallery').addEventListener('click', ()=>$('input-gallery').click());
-$('input-camera') .addEventListener('change', e=>loadFile(e.target.files[0]));
-$('input-gallery').addEventListener('change', e=>loadFile(e.target.files[0]));
-$('rerun-btn').addEventListener('click', ()=>{ if(currentImageLoaded) detect(); });
-$('back-btn').addEventListener('click', ()=>{
+// ボタン
+$('btn-camera') .addEventListener('click',()=>$('input-camera') .click());
+$('btn-gallery').addEventListener('click',()=>$('input-gallery').click());
+$('input-camera') .addEventListener('change',e=>loadFile(e.target.files[0]));
+$('input-gallery').addEventListener('change',e=>loadFile(e.target.files[0]));
+
+$('rerun-btn').addEventListener('click',()=>{
+  if(!imgLoaded||!cvReady) return;
+  showEdge=false;
+  previewToggle.classList.remove('active');
+  hideErr(); hideHint();
+  showSpinner('解析中…');
+  countNum.textContent='…';
+  setTimeout(runDetect, 30);
+});
+
+previewToggle.addEventListener('click',()=>{
+  if(!imgLoaded) return;
+  showEdge=!showEdge;
+  previewToggle.classList.toggle('active',showEdge);
+  if(showEdge) drawEdgePreview();
+  else         redrawCircles();
+});
+
+$('back-btn').addEventListener('click',()=>{
   resultScreen.style.display='none';
   home.style.display='flex';
-  currentImageLoaded = false;
+  imgLoaded=false; showEdge=false; lastCircData=null; lastCircCols=0;
+  previewToggle.classList.remove('active');
+  hideErr(); hideHint();
   $('input-camera').value='';
   $('input-gallery').value='';
 });
 
-// ── 画像読み込み ──
+// 画像読み込み
 function loadFile(file){
-  if(!file||!file.type.startsWith('image/'))return;
-  const url = URL.createObjectURL(file);
-  photo.onload = ()=>{
+  if(!file||!file.type.startsWith('image/')) return;
+  const url=URL.createObjectURL(file);
+  photo.onload=()=>{
     URL.revokeObjectURL(url);
-    currentImageLoaded = true;
+    imgLoaded=true;
     home.style.display='none';
     resultScreen.style.display='flex';
-    showSpinner('解析中…');
+    hideErr(); hideHint();
     countNum.textContent='…';
-    // layout が確定するまで待つ
+    showSpinner(cvReady?'解析中…':'OpenCV 読み込み中…');
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       syncOverlay();
-      if(cvReady) detect();
-      // cvReady でなければ onCvReady() から detect() が呼ばれる
+      if(cvReady) runDetect();
     }));
   };
-  photo.src = url;
+  photo.onerror=()=>showErr('画像の読み込みに失敗しました');
+  photo.src=url;
 }
 
 function syncOverlay(){
-  const wrap = $('img-wrap').getBoundingClientRect();
-  const r    = photo.getBoundingClientRect();
-  overlay.width  = r.width;
-  overlay.height = r.height;
-  overlay.style.left = (r.left - wrap.left) + 'px';
-  overlay.style.top  = (r.top  - wrap.top)  + 'px';
+  const wrap=$('img-wrap').getBoundingClientRect();
+  const r=photo.getBoundingClientRect();
+  overlay.width =Math.round(r.width);
+  overlay.height=Math.round(r.height);
+  overlay.style.left=Math.round(r.left-wrap.left)+'px';
+  overlay.style.top =Math.round(r.top -wrap.top )+'px';
 }
 
-function showSpinner(msg){ spinner.classList.remove('hidden'); spinnerMsg.textContent=msg||''; }
-function hideSpinner(){ spinner.classList.add('hidden'); }
+// ── 検知本体 ─────────────────────────────────────────────
+function runDetect(){
+  const param2 =STRICT_P2[parseInt($('sl-strict').value)];
+  const minDist=DIST_MD  [parseInt($('sl-dist'  ).value)];
 
-// ── 検知本体 ──
-function detect(){
-  showSpinner('解析中…');
-  setTimeout(()=>{ // UI更新を先に反映
-    _runDetect();
-  }, 30);
-}
+  proc.width =PROC_W;
+  proc.height=PROC_H;
+  pctx.drawImage(photo,0,0,PROC_W,PROC_H);
 
-function _runDetect(){
-  const param2  = SENS_MAP[parseInt(sensSlider.value)];
-  const minDist = Math.max(6, Math.round(CFG.procW * CFG.minDistRatio));
-
-  proc.width  = CFG.procW;
-  proc.height = CFG.procH;
-  pctx.drawImage(photo, 0, 0, CFG.procW, CFG.procH);
-
-  let src, gray, circ;
+  let src,gray,blurred,circ;
   try{
-    src  = cv.imread(proc);
-    gray = new cv.Mat();
-    circ = new cv.Mat();
+    src    =cv.imread(proc);
+    gray   =new cv.Mat();
+    blurred=new cv.Mat();
+    circ   =new cv.Mat();
 
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-    // コントラスト強調（CLAHE）で輪郭を鮮明に
-    const clahe = new cv.CLAHE(2.5, new cv.Size(8, 8));
-    clahe.apply(gray, gray);
-    clahe.delete();
+    // グレースケール
+    cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
 
-    cv.GaussianBlur(gray, gray, new cv.Size(CFG.blurK, CFG.blurK), 0);
+    // ガウシアンブラー（equalizeHistは使わない）
+    cv.GaussianBlur(gray,blurred,new cv.Size(BLUR_K,BLUR_K),0);
 
+    // Hough円検知
     cv.HoughCircles(
-      gray, circ, cv.HOUGH_GRADIENT,
-      CFG.dp, minDist,
-      CFG.param1, param2,
-      CFG.minRadius, CFG.maxRadius
+      blurred, circ,
+      cv.HOUGH_GRADIENT,
+      DP,
+      minDist,
+      PARAM1,   // param1: Canny上限
+      param2,   // param2: 投票閾値（高い=厳格）
+      MIN_R,
+      MAX_R
     );
 
-    const n = circ.cols;
-    drawResults(circ);
-    countNum.textContent = n;
+    const n=circ.cols;
+
+    // 結果を Float32Array にコピー保存（Matは後でdelete）
+    lastCircCols=n;
+    lastCircData=new Float32Array(n*3);
+    for(let i=0;i<n*3;i++) lastCircData[i]=circ.data32F[i];
+
+    countNum.textContent=n;
+    syncOverlay();
+    drawCircleData(lastCircData,lastCircCols);
+
+    // チューニングヒント
+    if(n===0){
+      showHint('⚠ 検知なし：「厳格度」を下げるか「エッジ確認」で輪郭を確認してください');
+    } else if(n>300){
+      showHint('⚠ 検知が多すぎる場合は「厳格度」を上げて再解析してください');
+    } else {
+      hideHint();
+    }
+
   }catch(e){
-    console.error(e);
-    countNum.textContent = 'ERR';
+    console.error('HoughCircles error:',e);
+    countNum.textContent='0';
+    showErr('解析エラー: '+(e.message||String(e)));
+    octx.clearRect(0,0,overlay.width,overlay.height);
   }finally{
-    if(src)  src.delete();
-    if(gray) gray.delete();
-    if(circ) circ.delete();
+    if(src)     src.delete();
+    if(gray)    gray.delete();
+    if(blurred) blurred.delete();
+    if(circ)    circ.delete();
     hideSpinner();
   }
 }
 
-// ── 結果を overlay に描画 ──
-function drawResults(circ){
-  syncOverlay();
-  const ow = overlay.width, oh = overlay.height;
-  const sx = ow / CFG.procW, sy = oh / CFG.procH;
-  const sc = (sx + sy) / 2;
+// ── 円描画（保存データから） ─────────────────────────────
+function drawCircleData(data,n){
+  const ow=overlay.width, oh=overlay.height;
+  const sx=ow/PROC_W, sy=oh/PROC_H;
+  const sc=(sx+sy)/2;
+  octx.clearRect(0,0,ow,oh);
 
-  octx.clearRect(0, 0, ow, oh);
-
-  for(let i=0; i<circ.cols; i++){
-    const cx = circ.data32F[i*3]   * sx;
-    const cy = circ.data32F[i*3+1] * sy;
-    const r  = circ.data32F[i*3+2] * sc;
+  for(let i=0;i<n;i++){
+    const cx=data[i*3]  *sx;
+    const cy=data[i*3+1]*sy;
+    const r =data[i*3+2]*sc;
 
     // グロー
-    octx.beginPath(); octx.arc(cx, cy, r+6, 0, Math.PI*2);
-    octx.strokeStyle='rgba(255,40,40,0.22)'; octx.lineWidth=10; octx.stroke();
+    octx.beginPath(); octx.arc(cx,cy,r+5,0,Math.PI*2);
+    octx.strokeStyle='rgba(255,34,34,0.18)'; octx.lineWidth=10; octx.stroke();
 
-    // 赤い円枠（太め）
-    octx.beginPath(); octx.arc(cx, cy, r, 0, Math.PI*2);
+    // 赤枠（太め）
+    octx.beginPath(); octx.arc(cx,cy,r,0,Math.PI*2);
     octx.strokeStyle='#ff2222'; octx.lineWidth=3.5; octx.stroke();
 
     // 中心点
-    octx.beginPath(); octx.arc(cx, cy, 3.5, 0, Math.PI*2);
+    octx.beginPath(); octx.arc(cx,cy,3.5,0,Math.PI*2);
     octx.fillStyle='#ff2222'; octx.fill();
 
-    // 番号（円が小さい時は省略）
-    if(r >= 10){
-      const fs = Math.max(9, Math.min(r * 0.55, 22));
+    // 番号（半径が十分ある場合のみ）
+    if(r>=10){
+      const fs=Math.max(9,Math.min(r*0.55,20));
       octx.font=`bold ${fs}px Arial`;
       octx.textAlign='center'; octx.textBaseline='middle';
-      octx.fillStyle='rgba(0,0,0,.6)'; octx.fillText(i+1, cx+1, cy+1);
-      octx.fillStyle='#fff';           octx.fillText(i+1, cx,   cy);
+      octx.fillStyle='rgba(0,0,0,.65)'; octx.fillText(i+1,cx+1,cy+1);
+      octx.fillStyle='#fff';            octx.fillText(i+1,cx,  cy);
     }
   }
 }
 
-window.addEventListener('resize', ()=>{
-  if(currentImageLoaded && resultScreen.style.display!=='none'){
+function redrawCircles(){
+  if(lastCircData) drawCircleData(lastCircData,lastCircCols);
+}
+
+// ── エッジプレビュー ─────────────────────────────────────
+function drawEdgePreview(){
+  if(!cvReady||!imgLoaded) return;
+  proc.width=PROC_W; proc.height=PROC_H;
+  pctx.drawImage(photo,0,0,PROC_W,PROC_H);
+
+  let src,gray,blurred,edges;
+  try{
+    src    =cv.imread(proc);
+    gray   =new cv.Mat();
+    blurred=new cv.Mat();
+    edges  =new cv.Mat();
+
+    cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+    cv.GaussianBlur(gray,blurred,new cv.Size(BLUR_K,BLUR_K),0);
+    cv.Canny(blurred,edges,Math.round(PARAM1*0.5),PARAM1);
+
     syncOverlay();
-    if(cvReady) drawResults; // 再描画のみ（再検知なし）
+    const ow=overlay.width, oh=overlay.height;
+    octx.clearRect(0,0,ow,oh);
+    cv.imshow(proc,edges);
+    octx.drawImage(proc,0,0,PROC_W,PROC_H,0,0,ow,oh);
+
+    // 背景を半透明黒で重ねて見やすく
+    octx.globalCompositeOperation='destination-over';
+    octx.fillStyle='rgba(0,0,0,0.6)';
+    octx.fillRect(0,0,ow,oh);
+    octx.globalCompositeOperation='source-over';
+
+    showHint('エッジ確認モード：白い線が検知の元になる輪郭です。線が少ない場合は厳格度を下げてください。');
+  }catch(e){
+    console.error(e);
+  }finally{
+    if(src)     src.delete();
+    if(gray)    gray.delete();
+    if(blurred) blurred.delete();
+    if(edges)   edges.delete();
   }
+}
+
+// ── ヘルパー ──────────────────────────────────────────────
+function showSpinner(msg){ spinner.classList.remove('hidden'); spinnerMsg.textContent=msg||''; }
+function hideSpinner()   { spinner.classList.add('hidden'); }
+function showErr(msg)    { errBox.textContent=msg; errBox.style.display='block'; }
+function hideErr()       { errBox.style.display='none'; }
+function showHint(msg)   { hint.textContent=msg; hint.style.display='block'; }
+function hideHint()      { hint.style.display='none'; }
+
+window.addEventListener('resize',()=>{
+  if(!imgLoaded||resultScreen.style.display==='none') return;
+  syncOverlay();
+  if(showEdge) drawEdgePreview(); else redrawCircles();
 });
 </script>
 </body>
