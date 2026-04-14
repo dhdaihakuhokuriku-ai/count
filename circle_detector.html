@@ -5,157 +5,143 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>丸棒カウンター</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;}
-  html,body{width:100%;height:100%;background:#111;overflow:hidden;
-    font-family:'Arial Black',Arial,sans-serif;-webkit-tap-highlight-color:transparent;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#111;overflow:hidden;
+  font-family:'Arial Black',Arial,sans-serif;-webkit-tap-highlight-color:transparent;}
 
-  /* ── 起動画面 ── */
-  #home{position:fixed;inset:0;z-index:30;background:#111;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;}
-  #home h1{font-size:22px;color:#fff;letter-spacing:.1em;margin-bottom:6px;}
-  #home p{font-size:12px;color:#555;margin-bottom:36px;}
-  .big-btn{width:250px;padding:18px 0;border:none;border-radius:6px;
-    font-size:17px;font-weight:900;letter-spacing:.08em;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;gap:10px;
-    -webkit-appearance:none;transition:filter .12s;}
-  .big-btn:active{filter:brightness(.75);}
-  #btn-camera{background:#ff2222;color:#fff;margin-bottom:14px;}
-  #btn-gallery{background:#1e1e1e;color:#bbb;border:1px solid #333;}
-  .big-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-  #input-camera,#input-gallery{display:none;}
-  #cv-badge{margin-top:32px;font-size:11px;padding:5px 14px;border-radius:20px;border:1px solid #333;color:#555;}
-  #cv-badge.ok{color:#00cc66;border-color:#00cc66;}
-  #cv-badge.err{color:#f44;border-color:#f44;}
+/* ── 起動画面 ── */
+#home{position:fixed;inset:0;z-index:30;background:#111;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;}
+#home h1{font-size:22px;color:#fff;letter-spacing:.1em;margin-bottom:6px;}
+#home p{font-size:12px;color:#555;margin-bottom:44px;}
+.big-btn{width:250px;padding:18px 0;border:none;border-radius:6px;
+  font-size:17px;font-weight:900;letter-spacing:.08em;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  -webkit-appearance:none;transition:filter .12s;}
+.big-btn:active{filter:brightness(.75);}
+#btn-camera{background:#ff2222;color:#fff;margin-bottom:14px;}
+#btn-gallery{background:#1e1e1e;color:#bbb;border:1px solid #333;}
+.big-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+#input-camera,#input-gallery{display:none;}
+#cv-badge{margin-top:32px;font-size:11px;padding:5px 14px;border-radius:20px;border:1px solid #333;color:#555;}
+#cv-badge.ok{color:#00cc66;border-color:#00cc66;}
+#cv-badge.err{color:#f44;border-color:#f44;}
 
-  /* ── 選択画面 ── */
-  #select-screen{position:fixed;inset:0;z-index:25;display:none;flex-direction:column;background:#000;}
-  #select-bar{flex-shrink:0;background:#000;padding:10px 14px 8px;border-bottom:1px solid #1a1a1a;
-    display:flex;align-items:center;gap:10px;}
-  #select-bar p{font-size:12px;color:#ffcc00;font-weight:700;flex:1;letter-spacing:.04em;}
-  #select-bar small{font-size:10px;color:#555;}
-  #reset-sel-btn{background:#333;color:#aaa;border:none;font-size:11px;font-weight:700;
-    padding:8px 14px;border-radius:4px;cursor:pointer;white-space:nowrap;}
-  #run-sel-btn{background:#ff2222;color:#fff;border:none;font-size:12px;font-weight:700;
-    padding:8px 16px;border-radius:4px;cursor:pointer;white-space:nowrap;}
-  #run-sel-btn:disabled{opacity:.3;cursor:default;}
-  #select-wrap{flex:1;position:relative;overflow:hidden;
-    display:flex;align-items:center;justify-content:center;background:#000;cursor:crosshair;}
-  #sel-photo{max-width:100%;max-height:100%;object-fit:contain;display:block;user-select:none;}
-  #sel-canvas{position:absolute;top:0;left:0;pointer-events:none;}
-  #select-back{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
-    background:rgba(0,0,0,.72);border:1px solid #444;color:#ccc;
-    font-size:13px;font-weight:700;padding:10px 28px;border-radius:26px;cursor:pointer;z-index:5;}
+/* ── ROI選択画面 ── */
+#sel-screen{position:fixed;inset:0;z-index:25;display:none;flex-direction:column;background:#000;}
+#sel-header{flex-shrink:0;background:#000;padding:12px 14px 10px;border-bottom:1px solid #222;}
+#sel-header p{font-size:13px;color:#ffcc00;font-weight:700;margin-bottom:2px;}
+#sel-header small{font-size:10px;color:#555;}
+#sel-btns{flex-shrink:0;display:flex;gap:8px;padding:8px 14px;background:#000;border-bottom:1px solid #1a1a1a;}
+#sel-reset{flex:1;background:#222;color:#aaa;border:1px solid #333;font-size:12px;font-weight:700;padding:10px 0;border-radius:4px;cursor:pointer;}
+#sel-go{flex:2;background:#ff2222;color:#fff;border:none;font-size:14px;font-weight:700;padding:10px 0;border-radius:4px;cursor:pointer;}
+#sel-go:disabled{opacity:.3;cursor:default;}
+#sel-wrap{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000;touch-action:none;}
+#sel-img{max-width:100%;max-height:100%;object-fit:contain;display:block;user-select:none;pointer-events:none;}
+#sel-cv{position:absolute;top:0;left:0;}
+#sel-back{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.72);border:1px solid #444;color:#ccc;
+  font-size:13px;font-weight:700;padding:10px 28px;border-radius:26px;cursor:pointer;z-index:5;}
 
-  /* ── 結果画面 ── */
-  #result-screen{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;background:#000;}
-  #count-bar{flex-shrink:0;background:rgba(0,0,0,.92);text-align:center;
-    padding:10px 0 6px;border-bottom:1px solid #1a1a1a;}
-  #count-label{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.2em;}
-  #count-num{font-size:92px;font-weight:900;line-height:1;color:#fff;
-    text-shadow:0 0 30px rgba(255,40,40,.8),0 2px 10px rgba(0,0,0,1);letter-spacing:-3px;}
+/* ── 結果画面 ── */
+#res-screen{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;background:#000;}
+#count-bar{flex-shrink:0;background:rgba(0,0,0,.94);text-align:center;padding:10px 0 6px;border-bottom:1px solid #1a1a1a;}
+#count-lbl{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.2em;}
+#count-num{font-size:92px;font-weight:900;line-height:1;color:#fff;
+  text-shadow:0 0 30px rgba(255,40,40,.8),0 2px 10px rgba(0,0,0,1);letter-spacing:-3px;}
 
-  /* コントロール */
-  #ctrl-bar{flex-shrink:0;background:rgba(0,0,0,.88);padding:9px 14px 7px;
-    border-bottom:1px solid #1a1a1a;display:flex;flex-direction:column;gap:7px;}
-  .ctrl-row{display:flex;align-items:center;gap:10px;}
-  .ctrl-label{font-size:10px;color:#777;white-space:nowrap;width:64px;}
-  input[type=range]{-webkit-appearance:none;flex:1;height:3px;background:#333;border-radius:2px;outline:none;cursor:pointer;}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#ff2222;border:2px solid #111;}
-  .ctrl-val{font-size:11px;color:#ff2222;font-weight:700;width:32px;text-align:right;flex-shrink:0;}
-  .ctrl-desc{font-size:9px;color:#444;flex:1;}
-  .btn-row{display:flex;gap:8px;margin-top:2px;}
-  .run-btn{flex:1;background:#ff2222;color:#fff;border:none;font-size:13px;font-weight:700;
-    padding:10px 0;border-radius:4px;cursor:pointer;letter-spacing:.05em;}
-  .run-btn:active{filter:brightness(.75);}
-  #resel-btn{background:#1a1a1a;color:#ffcc00;border:1px solid #443300;
-    font-size:11px;font-weight:700;padding:10px 14px;border-radius:4px;cursor:pointer;white-space:nowrap;}
-  #preview-toggle{background:#1a1a1a;color:#777;border:1px solid #333;
-    font-size:11px;font-weight:700;padding:10px 14px;border-radius:4px;cursor:pointer;white-space:nowrap;}
-  #preview-toggle.active{background:#001a00;color:#0f0;border-color:#0f0;}
+#ctrl-bar{flex-shrink:0;background:rgba(0,0,0,.9);padding:9px 14px 7px;border-bottom:1px solid #1a1a1a;display:flex;flex-direction:column;gap:7px;}
+.ctrl-row{display:flex;align-items:center;gap:8px;}
+.ctrl-lbl{font-size:10px;color:#777;white-space:nowrap;width:54px;}
+input[type=range]{-webkit-appearance:none;flex:1;height:3px;background:#333;border-radius:2px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#ff2222;border:2px solid #111;}
+.ctrl-num{font-size:11px;color:#ff2222;font-weight:700;width:22px;text-align:right;flex-shrink:0;}
+.ctrl-desc{font-size:9px;color:#444;flex:1;}
+.btn-row{display:flex;gap:6px;margin-top:2px;}
+.run-btn{flex:1;background:#ff2222;color:#fff;border:none;font-size:13px;font-weight:700;padding:10px 0;border-radius:4px;cursor:pointer;}
+.run-btn:active{filter:brightness(.75);}
+#resel-btn{background:#1a1400;color:#ffcc00;border:1px solid #443300;font-size:11px;font-weight:700;padding:10px 12px;border-radius:4px;cursor:pointer;white-space:nowrap;}
+#edge-btn{background:#1a1a1a;color:#777;border:1px solid #333;font-size:11px;font-weight:700;padding:10px 12px;border-radius:4px;cursor:pointer;white-space:nowrap;}
+#edge-btn.on{background:#001a00;color:#0f0;border-color:#0f0;}
 
-  #hint{flex-shrink:0;padding:5px 14px;font-size:10px;color:#aa8800;
-    background:#1a1400;border-bottom:1px solid #2a2000;display:none;line-height:1.5;}
+#hint{flex-shrink:0;padding:5px 14px;font-size:10px;color:#aa8800;background:#1a1400;border-bottom:1px solid #2a2000;display:none;line-height:1.5;}
 
-  /* 画像エリア */
-  #img-wrap{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000;}
-  #photo{max-width:100%;max-height:100%;object-fit:contain;display:block;}
-  #overlay{position:absolute;top:0;left:0;pointer-events:none;}
+#img-wrap{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000;}
+#photo{max-width:100%;max-height:100%;object-fit:contain;display:block;}
+#overlay{position:absolute;top:0;left:0;pointer-events:none;}
 
-  /* スピナー */
-  #spinner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:rgba(0,0,0,.65);z-index:10;gap:12px;}
-  #spinner svg{width:48px;height:48px;animation:spin .85s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  #spinner.hidden{display:none;}
-  #spinner-msg{font-size:13px;color:#aaa;}
+#spinner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.65);z-index:10;gap:12px;}
+#spinner svg{width:48px;height:48px;animation:spin .85s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#spinner.hidden{display:none;}
+#spin-msg{font-size:13px;color:#aaa;}
 
-  #back-btn{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
-    background:rgba(0,0,0,.72);border:1px solid #444;color:#ccc;
-    font-size:13px;font-weight:700;padding:10px 28px;border-radius:26px;cursor:pointer;z-index:10;}
-  #back-btn:active{background:rgba(255,34,34,.3);}
-
-  #err-box{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);
-    background:rgba(150,0,0,.9);color:#fff;font-size:12px;padding:8px 18px;
-    border-radius:6px;white-space:nowrap;display:none;z-index:11;}
-  #cv-tag{position:fixed;bottom:5px;right:8px;z-index:40;font-size:9px;color:#333;}
+#back-btn{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.72);border:1px solid #444;color:#ccc;
+  font-size:13px;font-weight:700;padding:10px 28px;border-radius:26px;cursor:pointer;z-index:10;}
+#back-btn:active{background:rgba(255,34,34,.3);}
+#err-box{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);
+  background:rgba(140,0,0,.9);color:#fff;font-size:12px;padding:8px 18px;border-radius:6px;white-space:nowrap;display:none;z-index:11;}
+#cv-tag{position:fixed;bottom:5px;right:8px;z-index:40;font-size:9px;color:#333;}
 </style>
 </head>
 <body>
 
-<!-- 起動画面 -->
+<!-- 起動 -->
 <div id="home">
   <h1>丸棒カウンター</h1>
-  <p>端面をドラッグで囲んで計数</p>
+  <p>端面の範囲を選んで計数</p>
   <button class="big-btn" id="btn-camera">
-    <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-    撮影して計数
+    <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>撮影して計数
   </button>
   <button class="big-btn" id="btn-gallery">
-    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-    アルバムから選択
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>アルバムから選択
   </button>
   <div id="cv-badge">OpenCV 読み込み中…</div>
 </div>
 <input type="file" id="input-camera"  accept="image/*" capture="environment">
 <input type="file" id="input-gallery" accept="image/*">
 
-<!-- 選択画面 -->
-<div id="select-screen">
-  <div id="select-bar">
-    <p>端面が写っている範囲をドラッグで囲む</p>
-    <button id="reset-sel-btn">やり直し</button>
-    <button id="run-sel-btn" disabled>この範囲で解析</button>
+<!-- ROI選択 -->
+<div id="sel-screen">
+  <div id="sel-header">
+    <p>① 端面が写っている部分だけをドラッグで囲む</p>
+    <small>棒の側面・背景・棚は範囲から外すと精度が上がります</small>
   </div>
-  <div id="select-wrap">
-    <img id="sel-photo" alt="">
-    <canvas id="sel-canvas"></canvas>
+  <div id="sel-btns">
+    <button id="sel-reset">やり直し</button>
+    <button id="sel-go" disabled>② この範囲で解析 →</button>
   </div>
-  <button id="select-back">← 撮り直す</button>
+  <div id="sel-wrap">
+    <img id="sel-img" alt="">
+    <canvas id="sel-cv"></canvas>
+  </div>
+  <button id="sel-back">← 撮り直す</button>
 </div>
 
-<!-- 結果画面 -->
-<div id="result-screen">
+<!-- 結果 -->
+<div id="res-screen">
   <div id="count-bar">
-    <div id="count-label">検知数</div>
+    <div id="count-lbl">検知数</div>
     <div id="count-num">—</div>
   </div>
   <div id="ctrl-bar">
     <div class="ctrl-row">
-      <span class="ctrl-label">真円度</span>
-      <input type="range" id="sl-circ" min="1" max="9" value="5">
-      <span class="ctrl-val" id="vl-circ">5</span>
-      <span class="ctrl-desc">高=円形のみ / 低=楕円・重なりも検知</span>
+      <span class="ctrl-lbl">感度</span>
+      <input type="range" id="sl-sens" min="1" max="9" value="5">
+      <span class="ctrl-num" id="vl-sens">5</span>
+      <span class="ctrl-desc">低=厳格（誤検知減）/ 高=感度大（見落とし減）</span>
     </div>
     <div class="ctrl-row">
-      <span class="ctrl-label">棒サイズ</span>
+      <span class="ctrl-lbl">棒径</span>
       <input type="range" id="sl-size" min="1" max="9" value="5">
-      <span class="ctrl-val" id="vl-size">5</span>
-      <span class="ctrl-desc">写真内の棒の端面の大きさに合わせる</span>
+      <span class="ctrl-num" id="vl-size">5</span>
+      <span class="ctrl-desc">端面が小さい=低 / 大きい=高</span>
     </div>
     <div class="btn-row">
       <button class="run-btn" id="rerun-btn">再解析</button>
       <button id="resel-btn">範囲選び直し</button>
-      <button id="preview-toggle">エッジ確認</button>
+      <button id="edge-btn">エッジ確認</button>
     </div>
   </div>
   <div id="hint"></div>
@@ -166,7 +152,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="#ff2222" stroke-width="2.5" stroke-linecap="round">
         <path d="M12 2a10 10 0 1 0 10 10"/>
       </svg>
-      <p id="spinner-msg">解析中…</p>
+      <p id="spin-msg">解析中…</p>
     </div>
     <div id="err-box"></div>
   </div>
@@ -179,61 +165,62 @@
 <script async src="https://docs.opencv.org/4.8.0/opencv.js"
   onload="onCvReady()" onerror="onCvError()"></script>
 <script>
-// ══════════════════════════════════════════════════
-//  真円度 = 4π × 面積 / 周長²  (円=1.0)
-//  ROI内だけを解析するので背景ノイズをゼロにできる
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  アルゴリズム: HoughCircles を ROI内だけに適用
+//  - 重なっている円も独立して検知できる
+//  - ROI限定なので背景ノイズはゼロ
+//  処理解像度: ROIを最大 PROC_MAX px 幅にリサイズして解析
+// ══════════════════════════════════════════════════════
 
-// 真円度レベル(1-9) → 閾値
-const CIRC_TBL = [null, 0.35, 0.43, 0.51, 0.58, 0.65, 0.71, 0.77, 0.83, 0.89];
+const PROC_MAX = 900; // 処理解像度の上限（広すぎると重い）
 
-// サイズレベル → [minArea, maxArea] px²  (ROI内の解像度に依存するため後で補正)
-const SIZE_TBL = [
+// 感度レベル → param2 (低いほど多く検知)
+const SENS = [null, 38, 31, 25, 20, 16, 13, 10, 8, 6];
+//                   1   2   3   4   5   6   7  8  9
+
+// 棒径レベル → [minR, maxR] px (PROC_MAX基準)
+const RSIZE = [
   null,
-  [30,   3000],
-  [60,   6000],
-  [100,  10000],
-  [150,  16000],
-  [220,  24000],  // 5:デフォルト
-  [320,  34000],
-  [460,  46000],
-  [630,  60000],
-  [850,  80000],
+  [ 3,  14],  // 1
+  [ 4,  18],  // 2
+  [ 6,  24],  // 3
+  [ 8,  30],  // 4
+  [10,  40],  // 5 ★デフォルト
+  [14,  52],  // 6
+  [18,  65],  // 7
+  [24,  80],  // 8
+  [30, 100],  // 9
 ];
 
-// ── 状態 ─────────────────────────────────────────
-let cvReady   = false;
-let imgLoaded = false;
-let showEdge  = false;
-let lastDetected = [];
-let roiRect = null;   // {x,y,w,h} 元画像ピクセル座標
+// ── 状態 ─────────────────────────────────────────────
+let cvReady=false, imgLoaded=false, edgeMode=false;
+let roiRect=null;       // {x,y,w,h} 元画像ピクセル座標
+let lastCircles=[];     // [{cx,cy,r}] proc座標
 
-// ROI選択用
-let selStart = null, selEnd = null, isSelecting = false;
+// ROI選択
+let selStart=null, selEnd=null, dragging=false;
 
-const $ = id => document.getElementById(id);
-const proc  = $('proc');
-const pctx  = proc.getContext('2d', {willReadFrequently:true});
-const octx  = $('overlay').getContext('2d');
-const sctx  = $('sel-canvas').getContext('2d');
+const $=id=>document.getElementById(id);
+const proc=$('proc'), pctx=proc.getContext('2d',{willReadFrequently:true});
+const octx=$('overlay').getContext('2d');
+const sctx=$('sel-cv').getContext('2d');
 
-// ── OpenCV ───────────────────────────────────────
+// ── OpenCV ────────────────────────────────────────────
 function onCvReady(){
   cvReady=true; $('cv-badge').textContent='OpenCV 準備完了'; $('cv-badge').className='ok';
   $('cv-tag').textContent='CV OK';
-  if(imgLoaded && roiRect) runDetect();
+  if(imgLoaded&&roiRect) runDetect();
 }
 function onCvError(){
   $('cv-badge').textContent='OpenCV 読み込み失敗'; $('cv-badge').className='err';
-  $('cv-tag').textContent='CV ERR';
 }
 
-// ── スライダー ────────────────────────────────────
-['circ','size'].forEach(k=>{
+// ── スライダー ────────────────────────────────────────
+['sens','size'].forEach(k=>{
   $('sl-'+k).addEventListener('input',()=>$('vl-'+k).textContent=$('sl-'+k).value);
 });
 
-// ── ボタン ────────────────────────────────────────
+// ── ボタン ────────────────────────────────────────────
 $('btn-camera') .addEventListener('click',()=>$('input-camera') .click());
 $('btn-gallery').addEventListener('click',()=>$('input-gallery').click());
 $('input-camera') .addEventListener('change',e=>loadFile(e.target.files[0]));
@@ -241,66 +228,58 @@ $('input-gallery').addEventListener('change',e=>loadFile(e.target.files[0]));
 
 $('rerun-btn').addEventListener('click',()=>{
   if(!imgLoaded||!cvReady||!roiRect) return;
-  showEdge=false; $('preview-toggle').classList.remove('active');
-  hideErr(); hideHint(); showSpinner('解析中…'); $('count-num').textContent='…';
+  edgeMode=false; $('edge-btn').classList.remove('on');
+  hideHint(); showSpinner('解析中…'); $('count-num').textContent='…';
   setTimeout(runDetect,30);
 });
 $('resel-btn').addEventListener('click',()=> goToSelect());
-$('preview-toggle').addEventListener('click',()=>{
+$('edge-btn').addEventListener('click',()=>{
   if(!imgLoaded||!roiRect) return;
-  showEdge=!showEdge; $('preview-toggle').classList.toggle('active',showEdge);
-  showEdge ? drawEdgePreview() : redrawCircles();
+  edgeMode=!edgeMode; $('edge-btn').classList.toggle('on',edgeMode);
+  edgeMode ? drawEdge() : drawResult();
 });
-$('back-btn').addEventListener('click',()=> resetAll());
-$('select-back').addEventListener('click',()=> resetAll());
-$('reset-sel-btn').addEventListener('click',()=>{ selStart=null; selEnd=null; drawSelCanvas(); $('run-sel-btn').disabled=true; });
-$('run-sel-btn').addEventListener('click',()=> confirmROI());
+$('back-btn').addEventListener('click',resetAll);
+$('sel-back').addEventListener('click',resetAll);
+$('sel-reset').addEventListener('click',()=>{ selStart=selEnd=null; drawSel(); $('sel-go').disabled=true; });
+$('sel-go').addEventListener('click',confirmROI);
 
-// ── ファイル読み込み ──────────────────────────────
+// ── ファイル読み込み ──────────────────────────────────
 function loadFile(file){
   if(!file||!file.type.startsWith('image/')) return;
   const url=URL.createObjectURL(file);
-  // sel-photo と photo を両方セット
-  let loaded=0;
-  const onload=()=>{ if(++loaded<2) return; URL.revokeObjectURL(url); imgLoaded=true; goToSelect(); };
-  $('sel-photo').onload=onload; $('photo').onload=onload;
-  $('sel-photo').src=url; $('photo').src=url;
+  let n=0; const done=()=>{ if(++n<2) return; URL.revokeObjectURL(url); imgLoaded=true; goToSelect(); };
+  $('sel-img').onload=done; $('photo').onload=done;
+  $('sel-img').src=url; $('photo').src=url;
 }
 
-// ── 選択画面へ ────────────────────────────────────
+// ── ROI選択画面 ───────────────────────────────────────
 function goToSelect(){
-  $('home').style.display='none';
-  $('result-screen').style.display='none';
-  $('select-screen').style.display='flex';
-  selStart=null; selEnd=null;
-  $('run-sel-btn').disabled=true;
-  requestAnimationFrame(()=>requestAnimationFrame(syncSelCanvas));
+  $('home').style.display='none'; $('res-screen').style.display='none';
+  $('sel-screen').style.display='flex';
+  selStart=selEnd=null; $('sel-go').disabled=true;
+  requestAnimationFrame(()=>requestAnimationFrame(syncSelCv));
 }
 
-function syncSelCanvas(){
-  const wrap=$('select-wrap').getBoundingClientRect();
-  const r=$('sel-photo').getBoundingClientRect();
-  const sc=$('sel-canvas');
+function syncSelCv(){
+  const wrap=$('sel-wrap').getBoundingClientRect();
+  const r=$('sel-img').getBoundingClientRect();
+  const sc=$('sel-cv');
   sc.width=Math.round(r.width); sc.height=Math.round(r.height);
   sc.style.left=Math.round(r.left-wrap.left)+'px';
   sc.style.top =Math.round(r.top -wrap.top )+'px';
-  drawSelCanvas();
+  drawSel();
 }
 
-function drawSelCanvas(){
-  const sc=$('sel-canvas');
+function drawSel(){
+  const sc=$('sel-cv');
   sctx.clearRect(0,0,sc.width,sc.height);
   if(!selStart||!selEnd) return;
   const x=Math.min(selStart.x,selEnd.x), y=Math.min(selStart.y,selEnd.y);
   const w=Math.abs(selEnd.x-selStart.x), h=Math.abs(selEnd.y-selStart.y);
-  // 暗い幕
-  sctx.fillStyle='rgba(0,0,0,0.5)';
+  sctx.fillStyle='rgba(0,0,0,.5)';
   sctx.fillRect(0,0,sc.width,sc.height);
-  // 選択範囲を切り抜く
   sctx.clearRect(x,y,w,h);
-  // 枠線
   sctx.strokeStyle='#ffcc00'; sctx.lineWidth=2; sctx.strokeRect(x,y,w,h);
-  // コーナーマーク
   const cs=10;
   sctx.strokeStyle='#fff'; sctx.lineWidth=3;
   [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([px,py])=>{
@@ -309,61 +288,43 @@ function drawSelCanvas(){
   });
 }
 
-// タッチ / マウス
-const sw=$('select-wrap');
 function getPos(e){
-  const sc=$('sel-canvas');
-  const r=sc.getBoundingClientRect();
-  const src=e.touches ? e.touches[0] : e;
-  return {x:src.clientX-r.left, y:src.clientY-r.top};
+  const r=$('sel-cv').getBoundingClientRect();
+  const t=e.touches?e.touches[0]:e;
+  return {x:t.clientX-r.left, y:t.clientY-r.top};
 }
-sw.addEventListener('mousedown',  e=>{isSelecting=true; selStart=getPos(e); selEnd=getPos(e); drawSelCanvas();});
-sw.addEventListener('mousemove',  e=>{if(!isSelecting) return; selEnd=getPos(e); drawSelCanvas();});
-sw.addEventListener('mouseup',    e=>{isSelecting=false; selEnd=getPos(e); drawSelCanvas(); checkSelValid();});
-sw.addEventListener('touchstart', e=>{e.preventDefault(); isSelecting=true; selStart=getPos(e); selEnd=getPos(e); drawSelCanvas();},{passive:false});
-sw.addEventListener('touchmove',  e=>{e.preventDefault(); if(!isSelecting) return; selEnd=getPos(e); drawSelCanvas();},{passive:false});
-sw.addEventListener('touchend',   e=>{e.preventDefault(); isSelecting=false; checkSelValid();},{passive:false});
 
-function checkSelValid(){
+const sw=$('sel-wrap');
+sw.addEventListener('mousedown',  e=>{dragging=true; selStart=selEnd=getPos(e); drawSel();});
+sw.addEventListener('mousemove',  e=>{if(!dragging) return; selEnd=getPos(e); drawSel();});
+sw.addEventListener('mouseup',    e=>{dragging=false; selEnd=getPos(e); drawSel(); checkSel();});
+sw.addEventListener('touchstart', e=>{e.preventDefault(); dragging=true; selStart=selEnd=getPos(e); drawSel();},{passive:false});
+sw.addEventListener('touchmove',  e=>{e.preventDefault(); if(!dragging) return; selEnd=getPos(e); drawSel();},{passive:false});
+sw.addEventListener('touchend',   e=>{e.preventDefault(); dragging=false; checkSel();},{passive:false});
+
+function checkSel(){
   if(!selStart||!selEnd) return;
   const w=Math.abs(selEnd.x-selStart.x), h=Math.abs(selEnd.y-selStart.y);
-  $('run-sel-btn').disabled = (w<20||h<20);
+  $('sel-go').disabled=(w<20||h<20);
 }
 
-// ROI確定
+// ROI確定 → sel-canvas座標を元画像座標に変換
 function confirmROI(){
-  const sc=$('sel-canvas');
-  const photo=$('sel-photo');
-  const pr=photo.getBoundingClientRect();
+  const img=$('sel-img');
+  const pr=img.getBoundingClientRect();
+  const sx=img.naturalWidth/pr.width, sy=img.naturalHeight/pr.height;
+  const x=Math.min(selStart.x,selEnd.x), y=Math.min(selStart.y,selEnd.y);
+  const w=Math.abs(selEnd.x-selStart.x), h=Math.abs(selEnd.y-selStart.y);
+  roiRect={x:Math.round(x*sx), y:Math.round(y*sy), w:Math.round(w*sx), h:Math.round(h*sy)};
 
-  // sel-canvas 座標 → 元画像ピクセル座標
-  const scaleX = photo.naturalWidth  / pr.width;
-  const scaleY = photo.naturalHeight / pr.height;
-
-  let x=Math.min(selStart.x,selEnd.x);
-  let y=Math.min(selStart.y,selEnd.y);
-  let w=Math.abs(selEnd.x-selStart.x);
-  let h=Math.abs(selEnd.y-selStart.y);
-
-  // sel-canvas は sel-photo の左上に重なっている
-  roiRect = {
-    x: Math.round(x * scaleX),
-    y: Math.round(y * scaleY),
-    w: Math.round(w * scaleX),
-    h: Math.round(h * scaleY),
-  };
-
-  $('select-screen').style.display='none';
-  $('result-screen').style.display='flex';
-  hideErr(); hideHint(); $('count-num').textContent='…';
-  showSpinner(cvReady?'解析中…':'OpenCV 読み込み中…');
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    syncOverlay(); if(cvReady) runDetect();
-  }));
+  $('sel-screen').style.display='none'; $('res-screen').style.display='flex';
+  $('count-num').textContent='…'; edgeMode=false; $('edge-btn').classList.remove('on');
+  hideHint(); showSpinner(cvReady?'解析中…':'OpenCV 読み込み中…');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{syncOv(); if(cvReady) runDetect();}));
 }
 
-// ── overlay sync ─────────────────────────────────
-function syncOverlay(){
+// ── overlay sync ──────────────────────────────────────
+function syncOv(){
   const wrap=$('img-wrap').getBoundingClientRect();
   const r=$('photo').getBoundingClientRect();
   const ov=$('overlay');
@@ -372,210 +333,181 @@ function syncOverlay(){
   ov.style.top =Math.round(r.top -wrap.top )+'px';
 }
 
-// ── 検知 ─────────────────────────────────────────
+// ── 検知 ─────────────────────────────────────────────
 function runDetect(){
   if(!roiRect) return;
-  const circThresh = CIRC_TBL[parseInt($('sl-circ').value)];
-  const [minArea,maxArea] = SIZE_TBL[parseInt($('sl-size').value)];
+  const param2=SENS[parseInt($('sl-sens').value)];
+  const [minR,maxR]=RSIZE[parseInt($('sl-size').value)];
+  const roi=roiRect;
 
-  const roi = roiRect;
-  // proc をROIサイズで作成（最大1000px幅）
-  const scale = Math.min(1.0, 1000 / Math.max(roi.w, roi.h));
-  const pw = Math.round(roi.w * scale);
-  const ph = Math.round(roi.h * scale);
-  const minA = minArea * scale * scale;
-  const maxA = maxArea * scale * scale;
+  // ROIを処理解像度にリサイズ
+  const scale=Math.min(1.0, PROC_MAX/Math.max(roi.w,roi.h));
+  const pw=Math.max(1,Math.round(roi.w*scale));
+  const ph=Math.max(1,Math.round(roi.h*scale));
+  const scaledMinR=Math.max(1,Math.round(minR*scale));
+  const scaledMaxR=Math.round(maxR*scale);
+  const minDist=Math.max(scaledMinR, Math.round(scaledMinR*1.6));
 
   proc.width=pw; proc.height=ph;
-  // 元画像のROI部分だけ proc に描画
-  pctx.drawImage($('photo'), roi.x, roi.y, roi.w, roi.h, 0, 0, pw, ph);
+  pctx.drawImage($('photo'), roi.x,roi.y,roi.w,roi.h, 0,0,pw,ph);
 
-  let src,gray,bilat,edges,dilated,contours,hierarchy,kernel;
+  let src,gray,blur,circ;
   try{
-    src      = cv.imread(proc);
-    gray     = new cv.Mat();
-    bilat    = new cv.Mat();
-    edges    = new cv.Mat();
-    dilated  = new cv.Mat();
-    contours = new cv.MatVector();
-    hierarchy= new cv.Mat();
+    src =cv.imread(proc);
+    gray=new cv.Mat(); blur=new cv.Mat(); circ=new cv.Mat();
 
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-    cv.bilateralFilter(gray, bilat, 9, 75, 75);
-    cv.Canny(bilat, edges, 30, 90);
-    kernel = cv.Mat.ones(3, 3, cv.CV_8U);
-    cv.dilate(edges, dilated, kernel);
-    cv.findContours(dilated, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+    cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+    cv.GaussianBlur(gray,blur,new cv.Size(7,7),1.5);
 
-    const detected = [];
-    for(let i=0; i<contours.size(); i++){
-      const cnt = contours.get(i);
-      const area = cv.contourArea(cnt);
-      if(area < minA || area > maxA){ cnt.delete(); continue; }
-      const peri = cv.arcLength(cnt, true);
-      if(peri < 1){ cnt.delete(); continue; }
-      const circ = (4 * Math.PI * area) / (peri * peri);
-      if(circ < circThresh){ cnt.delete(); continue; }
-      const M = cv.moments(cnt);
-      if(M.m00 > 0){
-        detected.push({
-          cx: M.m10/M.m00,
-          cy: M.m01/M.m00,
-          r : Math.sqrt(area/Math.PI)
-        });
-      }
-      cnt.delete();
+    cv.HoughCircles(
+      blur, circ,
+      cv.HOUGH_GRADIENT,
+      1.2,        // dp
+      minDist,    // minDist between centers
+      60,         // param1: Canny upper
+      param2,     // param2: accumulator threshold
+      scaledMinR,
+      scaledMaxR
+    );
+
+    // Float32Array コピー保存
+    lastCircles=[];
+    for(let i=0;i<circ.cols;i++){
+      lastCircles.push({
+        cx:circ.data32F[i*3],
+        cy:circ.data32F[i*3+1],
+        r :circ.data32F[i*3+2],
+      });
     }
+    $('count-num').textContent=lastCircles.length;
+    syncOv(); drawResult();
 
-    lastDetected = detected;
-    $('count-num').textContent = detected.length;
-    syncOverlay(); drawCircleData(detected, pw, ph);
-
-    if(detected.length===0)
-      showHint('⚠ 検知なし ― 「真円度」を下げる(3〜4)か「棒サイズ」を調整してください。');
-    else if(detected.length>400)
-      showHint('⚠ 多すぎる場合は「真円度」を上げて(7〜8)再解析してください。');
+    if(lastCircles.length===0)
+      showHint('⚠ 検知なし ― 感度を上げる（右に動かす）か、棒径を調整して「再解析」してください。「エッジ確認」で端面の縁が白く出ているか確認できます。');
+    else if(lastCircles.length>400)
+      showHint('⚠ 多すぎる場合は感度を下げて（左に動かす）再解析してください。');
     else hideHint();
 
   }catch(e){
-    console.error(e);
-    $('count-num').textContent='0';
-    showErr('解析エラー: '+(e.message||String(e)));
+    console.error(e); $('count-num').textContent='0'; showErr('解析エラー: '+(e.message||e));
     octx.clearRect(0,0,$('overlay').width,$('overlay').height);
   }finally{
-    if(src)       src.delete();
-    if(gray)      gray.delete();
-    if(bilat)     bilat.delete();
-    if(edges)     edges.delete();
-    if(dilated)   dilated.delete();
-    if(kernel)    kernel.delete();
-    if(contours)  contours.delete();
-    if(hierarchy) hierarchy.delete();
+    if(src) src.delete(); if(gray) gray.delete(); if(blur) blur.delete(); if(circ) circ.delete();
     hideSpinner();
   }
 }
 
-// ── 描画 ─────────────────────────────────────────
-function drawCircleData(detected, pw, ph){
-  const photo = $('photo');
-  const ov = $('overlay');
-  const pr = photo.getBoundingClientRect();
-  // 元画像 → 表示座標 のスケール
-  const imgScaleX = pr.width  / photo.naturalWidth;
-  const imgScaleY = pr.height / photo.naturalHeight;
-  // ROI オフセット（表示座標）
-  const roiOffX = roiRect.x * imgScaleX;
-  const roiOffY = roiRect.y * imgScaleY;
-  // proc(ROI切り出し) → 表示座標 のスケール
-  const sx = (roiRect.w * imgScaleX) / pw;
-  const sy = (roiRect.h * imgScaleY) / ph;
-  const sc = (sx+sy)/2;
+// ── 結果描画 ──────────────────────────────────────────
+function drawResult(){
+  const photo=$('photo');
+  const ov=$('overlay');
+  const pr=photo.getBoundingClientRect();
+  // 元画像→表示座標
+  const imgSX=pr.width/photo.naturalWidth, imgSY=pr.height/photo.naturalHeight;
+  // ROI表示座標
+  const roi=roiRect;
+  const roiDispX=roi.x*imgSX, roiDispY=roi.y*imgSY;
+  const roiDispW=roi.w*imgSX, roiDispH=roi.h*imgSY;
 
-  // overlay の左上は photo の左上と一致
-  const wrap=$('img-wrap').getBoundingClientRect();
-  const offX = roiOffX; // overlay は photo 基準
-  const offY = roiOffY;
+  const scale=Math.min(1.0, PROC_MAX/Math.max(roi.w,roi.h));
+  const pw=Math.max(1,Math.round(roi.w*scale));
+  const ph=Math.max(1,Math.round(roi.h*scale));
+
+  // proc座標→表示座標
+  const sx=roiDispW/pw, sy=roiDispH/ph;
+  const sc=(sx+sy)/2;
 
   octx.clearRect(0,0,ov.width,ov.height);
 
   // ROI枠
-  octx.strokeStyle='rgba(255,204,0,0.6)'; octx.lineWidth=2; octx.setLineDash([6,4]);
-  octx.strokeRect(offX, offY, roiRect.w*imgScaleX, roiRect.h*imgScaleY);
+  octx.strokeStyle='rgba(255,204,0,0.5)'; octx.lineWidth=1.5; octx.setLineDash([5,4]);
+  octx.strokeRect(roiDispX,roiDispY,roiDispW,roiDispH);
   octx.setLineDash([]);
 
-  detected.forEach((d,i)=>{
-    const cx = offX + d.cx*sx;
-    const cy = offY + d.cy*sy;
-    const r  = d.r*sc;
+  lastCircles.forEach((d,i)=>{
+    const cx=roiDispX+d.cx*sx;
+    const cy=roiDispY+d.cy*sy;
+    const r =d.r*sc;
 
+    // グロー
     octx.beginPath(); octx.arc(cx,cy,r+5,0,Math.PI*2);
     octx.strokeStyle='rgba(255,34,34,0.2)'; octx.lineWidth=10; octx.stroke();
-
+    // 赤枠
     octx.beginPath(); octx.arc(cx,cy,r,0,Math.PI*2);
     octx.strokeStyle='#ff2222'; octx.lineWidth=3.5; octx.stroke();
-
+    // 中心
     octx.beginPath(); octx.arc(cx,cy,3,0,Math.PI*2);
     octx.fillStyle='#ff2222'; octx.fill();
-
+    // 番号
     if(r>=9){
       const fs=Math.max(8,Math.min(r*0.55,18));
-      octx.font=`bold ${fs}px Arial`;
-      octx.textAlign='center'; octx.textBaseline='middle';
+      octx.font=`bold ${fs}px Arial`; octx.textAlign='center'; octx.textBaseline='middle';
       octx.fillStyle='rgba(0,0,0,.7)'; octx.fillText(i+1,cx+1,cy+1);
       octx.fillStyle='#fff';           octx.fillText(i+1,cx,  cy);
     }
   });
 }
 
-function redrawCircles(){ if(lastDetected.length>=0 && roiRect) drawCircleData(lastDetected, proc.width, proc.height); }
-
-// ── エッジプレビュー ──────────────────────────────
-function drawEdgePreview(){
+// ── エッジ確認 ────────────────────────────────────────
+function drawEdge(){
   if(!cvReady||!imgLoaded||!roiRect) return;
   const roi=roiRect;
-  const scale=Math.min(1.0, 1000/Math.max(roi.w,roi.h));
-  const pw=Math.round(roi.w*scale), ph=Math.round(roi.h*scale);
+  const scale=Math.min(1.0, PROC_MAX/Math.max(roi.w,roi.h));
+  const pw=Math.max(1,Math.round(roi.w*scale));
+  const ph=Math.max(1,Math.round(roi.h*scale));
   proc.width=pw; proc.height=ph;
-  pctx.drawImage($('photo'), roi.x, roi.y, roi.w, roi.h, 0, 0, pw, ph);
+  pctx.drawImage($('photo'), roi.x,roi.y,roi.w,roi.h, 0,0,pw,ph);
 
-  let src,gray,bilat,edges;
+  let src,gray,blur,edges;
   try{
-    src=cv.imread(proc); gray=new cv.Mat(); bilat=new cv.Mat(); edges=new cv.Mat();
+    src=cv.imread(proc); gray=new cv.Mat(); blur=new cv.Mat(); edges=new cv.Mat();
     cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
-    cv.bilateralFilter(gray,bilat,9,75,75);
-    cv.Canny(bilat,edges,30,90);
-    syncOverlay();
-    const ov=$('overlay');
+    cv.GaussianBlur(gray,blur,new cv.Size(7,7),1.5);
+    cv.Canny(blur,edges,30,80);
+    cv.imshow(proc,edges);
 
-    // 元画像座標 → overlay座標
-    const photo=$('photo');
+    const photo=$('photo'), ov=$('overlay');
     const pr=photo.getBoundingClientRect();
     const imgSX=pr.width/photo.naturalWidth, imgSY=pr.height/photo.naturalHeight;
     const ox=roi.x*imgSX, oy=roi.y*imgSY;
     const dw=roi.w*imgSX, dh=roi.h*imgSY;
-
+    syncOv();
     octx.clearRect(0,0,ov.width,ov.height);
-    // 背景を暗く
-    octx.fillStyle='rgba(0,0,0,0.65)'; octx.fillRect(0,0,ov.width,ov.height);
-    // エッジを ROI位置に描画
-    cv.imshow(proc, edges);
-    octx.drawImage(proc, 0, 0, pw, ph, ox, oy, dw, dh);
-    // ROI枠
-    octx.strokeStyle='#ffcc00'; octx.lineWidth=2; octx.setLineDash([6,4]);
+    // 全体を暗くしてROIにエッジ表示
+    octx.fillStyle='rgba(0,0,0,.7)'; octx.fillRect(0,0,ov.width,ov.height);
+    octx.drawImage(proc,0,0,pw,ph, ox,oy,dw,dh);
+    octx.strokeStyle='#ffcc00'; octx.lineWidth=1.5; octx.setLineDash([5,4]);
     octx.strokeRect(ox,oy,dw,dh); octx.setLineDash([]);
-    showHint('エッジ確認：棒の端面の縁が白いリング状に出ていれば検知できます。');
+    showHint('エッジ確認：棒の端面の縁がリング状に白く出ていればOKです。出ていない場合は感度を上げるか、撮影距離を変えてください。');
   }catch(e){console.error(e);}
   finally{
     if(src)  src.delete(); if(gray) gray.delete();
-    if(bilat)bilat.delete(); if(edges)edges.delete();
+    if(blur) blur.delete(); if(edges)edges.delete();
   }
 }
 
-// ── リセット ──────────────────────────────────────
+// ── リセット ──────────────────────────────────────────
 function resetAll(){
-  $('result-screen').style.display='none';
-  $('select-screen').style.display='none';
+  $('res-screen').style.display='none'; $('sel-screen').style.display='none';
   $('home').style.display='flex';
-  imgLoaded=false; showEdge=false; lastDetected=[]; roiRect=null;
-  selStart=null; selEnd=null;
-  $('preview-toggle').classList.remove('active');
+  imgLoaded=false; edgeMode=false; lastCircles=[]; roiRect=null; selStart=selEnd=null;
+  $('edge-btn').classList.remove('on');
   hideErr(); hideHint();
   $('input-camera').value=''; $('input-gallery').value='';
 }
 
-// ── ヘルパー ──────────────────────────────────────
-function showSpinner(msg){ $('spinner').classList.remove('hidden'); $('spinner-msg').textContent=msg; }
-function hideSpinner()   { $('spinner').classList.add('hidden'); }
-function showErr(msg)    { const e=$('err-box'); e.textContent=msg; e.style.display='block'; }
-function hideErr()       { $('err-box').style.display='none'; }
-function showHint(msg)   { const h=$('hint'); h.textContent=msg; h.style.display='block'; }
-function hideHint()      { $('hint').style.display='none'; }
+// ── ヘルパー ──────────────────────────────────────────
+function showSpinner(m){ $('spinner').classList.remove('hidden'); $('spin-msg').textContent=m; }
+function hideSpinner() { $('spinner').classList.add('hidden'); }
+function showErr(m)    { const e=$('err-box'); e.textContent=m; e.style.display='block'; }
+function hideErr()     { $('err-box').style.display='none'; }
+function showHint(m)   { const h=$('hint'); h.textContent=m; h.style.display='block'; }
+function hideHint()    { $('hint').style.display='none'; }
 
 window.addEventListener('resize',()=>{
-  if($('select-screen').style.display!=='none'){ syncSelCanvas(); return; }
-  if(!imgLoaded||$('result-screen').style.display==='none') return;
-  syncOverlay();
-  showEdge ? drawEdgePreview() : redrawCircles();
+  if($('sel-screen').style.display!=='none'){ syncSelCv(); return; }
+  if(!imgLoaded||$('res-screen').style.display==='none') return;
+  syncOv(); edgeMode ? drawEdge() : drawResult();
 });
 </script>
 </body>
