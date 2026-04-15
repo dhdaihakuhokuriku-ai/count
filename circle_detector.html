@@ -9,7 +9,6 @@
 html,body{width:100%;height:100%;background:#111;overflow:hidden;
   font-family:'Arial Black',Arial,sans-serif;-webkit-tap-highlight-color:transparent;}
 
-/* 起動 */
 #home{position:fixed;inset:0;z-index:30;background:#111;
   display:flex;flex-direction:column;align-items:center;justify-content:center;}
 #home h1{font-size:22px;color:#fff;letter-spacing:.1em;margin-bottom:6px;}
@@ -50,7 +49,6 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 #count-num{font-size:100px;font-weight:900;line-height:1;color:#fff;
   text-shadow:0 0 30px rgba(255,40,40,.8),0 2px 10px rgba(0,0,0,1);letter-spacing:-4px;}
 
-/* ボタンバー（スライダーなし） */
 #btn-bar{flex-shrink:0;display:flex;gap:8px;padding:10px 14px;background:rgba(0,0,0,.9);border-bottom:1px solid #1a1a1a;}
 .act-btn{flex:1;border:none;font-size:13px;font-weight:700;padding:12px 0;border-radius:4px;cursor:pointer;letter-spacing:.04em;}
 .act-btn:active{filter:brightness(.75);}
@@ -59,9 +57,8 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 #edge-btn{background:#1a1a1a;color:#777;border:1px solid #333;font-size:12px;}
 #edge-btn.on{background:#001a00;color:#0f0;border-color:#0f0;}
 
-/* 進捗バー */
-#progress-wrap{flex-shrink:0;height:3px;background:#1a1a1a;display:none;}
-#progress-bar{height:100%;background:#ff2222;width:0%;transition:width .2s;}
+#progress-wrap{flex-shrink:0;height:4px;background:#1a1a1a;display:none;}
+#progress-bar{height:100%;background:#ff2222;width:0%;transition:width .15s;}
 
 #hint{flex-shrink:0;padding:6px 14px;font-size:10px;color:#aa8800;
   background:#1a1400;border-bottom:1px solid #2a2000;display:none;line-height:1.5;}
@@ -71,7 +68,7 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 #overlay{position:absolute;top:0;left:0;pointer-events:none;}
 
 #spinner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.7);z-index:10;gap:10px;}
+  background:rgba(0,0,0,.72);z-index:10;gap:10px;}
 #spinner svg{width:44px;height:44px;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 #spinner.hidden{display:none;}
@@ -89,7 +86,6 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 </head>
 <body>
 
-<!-- 起動 -->
 <div id="home">
   <h1>丸棒カウンター</h1>
   <p>端面の範囲を選んで自動計数</p>
@@ -106,11 +102,10 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 <input type="file" id="input-camera"  accept="image/*" capture="environment">
 <input type="file" id="input-gallery" accept="image/*">
 
-<!-- ROI選択 -->
 <div id="sel-screen">
   <div id="sel-header">
     <p>端面だけを囲んでください</p>
-    <small>⚠ 棒の側面・棚・背景は範囲に含めないこと<br>端面の断面が見えている部分のみをドラッグ</small>
+    <small>⚠ 棒の側面・棚・背景は範囲に含めない<br>断面が見えている部分のみをドラッグで選択</small>
   </div>
   <div id="sel-btns">
     <button id="sel-reset">やり直し</button>
@@ -123,7 +118,6 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
   <button id="sel-back">← 撮り直す</button>
 </div>
 
-<!-- 結果 -->
 <div id="res-screen">
   <div id="count-bar">
     <div id="count-lbl">検知数</div>
@@ -143,7 +137,7 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
       <svg viewBox="0 0 24 24" fill="none" stroke="#ff2222" stroke-width="2.5" stroke-linecap="round">
         <path d="M12 2a10 10 0 1 0 10 10"/>
       </svg>
-      <p id="spin-msg">解析中…</p>
+      <p id="spin-msg">自動解析中…</p>
     </div>
     <div id="err-box"></div>
   </div>
@@ -156,33 +150,27 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 <script async src="https://docs.opencv.org/4.8.0/opencv.js"
   onload="onCvReady()" onerror="onCvError()"></script>
 <script>
-// ════════════════════════════════════════════════════════
-//  スライダーなし・自動スイープ方式
+// ══════════════════════════════════════════════════════
+//  プラトー検出スイープ方式
 //
-//  【アルゴリズム】
-//  param2 (Hough投票閾値) を 高→低 にスイープして
-//  カウントが「急増する直前」の安定点を自動選択する。
+//  1. param2を高→低にスイープ（16段階）
+//  2. カウントが「プラトー（横ばい）」になる区間を検出
+//     → 連続3点のmax/min < 1.25 を安定とみなす
+//  3. 最初に見つかった安定プラトーを採用
+//  4. プラトーなし → カウントの中央値付近を採用
 //
-//  急増判定: counts[i+1] > counts[i] * GROWTH_THRESHOLD
-//  → その手前(i)を最終カウントとして採用
-//
-//  これにより・スライダー不要
-//            ・画像が変わっても自動で最適化
-//            ・誤検知の少ない安定したカウントを返す
-// ════════════════════════════════════════════════════════
+//  minDist: minR × 1.3（密集棒に対応、前回より小さい）
+//  半径範囲: ROIの幅から自動推定（棒が横に並んでいる想定）
+// ══════════════════════════════════════════════════════
 
 const PROC_MAX = 900;
 
-// スイープするparam2の値リスト (厳格→緩い)
-const P2_SWEEP = [50, 42, 35, 29, 24, 20, 17, 14, 12, 10];
+// スイープ: 厳格(高) → 緩い(低)
+const P2_LIST = [55, 48, 42, 37, 32, 28, 24, 21, 18, 16, 14, 12, 10, 9, 8, 7];
 
-// カウントが何倍以上になったら「急増」とみなすか
-const GROWTH_TH = 1.5;
-
-// 半径範囲 (proc解像度900px基準)
-// 多くの棒径をカバーする広めの設定
-const MIN_R =  5;
-const MAX_R = 80;
+// プラトー判定: 連続N点のmax/min がこの倍率以下
+const PLATEAU_WINDOW = 3;
+const PLATEAU_RATIO  = 1.25;
 
 // ── 状態 ─────────────────────────────────────────────
 let cvReady=false, imgLoaded=false, edgeMode=false;
@@ -195,7 +183,8 @@ const octx=$('overlay').getContext('2d');
 const sctx=$('sel-cv').getContext('2d');
 
 function onCvReady(){
-  cvReady=true; $('cv-badge').textContent='OpenCV 準備完了'; $('cv-badge').className='ok';
+  cvReady=true;
+  $('cv-badge').textContent='OpenCV 準備完了'; $('cv-badge').className='ok';
   $('cv-tag').textContent='CV OK';
   if(imgLoaded&&roiRect) runDetect();
 }
@@ -203,11 +192,11 @@ function onCvError(){
   $('cv-badge').textContent='OpenCV 読み込み失敗'; $('cv-badge').className='err';
 }
 
-// ── ボタン ────────────────────────────────────────────
 $('btn-camera') .addEventListener('click',()=>$('input-camera') .click());
 $('btn-gallery').addEventListener('click',()=>$('input-gallery').click());
 $('input-camera') .addEventListener('change',e=>loadFile(e.target.files[0]));
 $('input-gallery').addEventListener('change',e=>loadFile(e.target.files[0]));
+
 $('rerun-btn').addEventListener('click',()=>{
   if(!imgLoaded||!cvReady||!roiRect) return;
   edgeMode=false; $('edge-btn').classList.remove('on');
@@ -225,7 +214,6 @@ $('sel-back').addEventListener('click',resetAll);
 $('sel-reset').addEventListener('click',()=>{ selStart=selEnd=null; drawSel(); $('sel-go').disabled=true; });
 $('sel-go').addEventListener('click',confirmROI);
 
-// ── ファイル読み込み ──────────────────────────────────
 function loadFile(file){
   if(!file||!file.type.startsWith('image/')) return;
   const url=URL.createObjectURL(file);
@@ -259,8 +247,7 @@ function drawSel(){
   if(!selStart||!selEnd) return;
   const x=Math.min(selStart.x,selEnd.x), y=Math.min(selStart.y,selEnd.y);
   const w=Math.abs(selEnd.x-selStart.x), h=Math.abs(selEnd.y-selStart.y);
-  sctx.fillStyle='rgba(0,0,0,.55)';
-  sctx.fillRect(0,0,sc.width,sc.height);
+  sctx.fillStyle='rgba(0,0,0,.55)'; sctx.fillRect(0,0,sc.width,sc.height);
   sctx.clearRect(x,y,w,h);
   sctx.strokeStyle='#88ff44'; sctx.lineWidth=2.5; sctx.strokeRect(x,y,w,h);
   const cs=12; sctx.strokeStyle='#fff'; sctx.lineWidth=3;
@@ -268,9 +255,8 @@ function drawSel(){
     const dx=px===x?1:-1, dy=py===y?1:-1;
     sctx.beginPath(); sctx.moveTo(px+dx*cs,py); sctx.lineTo(px,py); sctx.lineTo(px,py+dy*cs); sctx.stroke();
   });
-  // サイズ表示
-  sctx.font='bold 12px Arial'; sctx.textAlign='center'; sctx.fillStyle='rgba(136,255,68,.8)';
-  sctx.fillText(`${Math.round(w)}×${Math.round(h)}`, x+w/2, y>20?y-6:y+h+16);
+  sctx.font='bold 11px Arial'; sctx.textAlign='center'; sctx.fillStyle='rgba(136,255,68,.8)';
+  sctx.fillText(`${Math.round(w)}×${Math.round(h)}`, x+w/2, y>18?y-5:y+h+14);
 }
 
 function getPos(e){
@@ -280,10 +266,10 @@ function getPos(e){
 }
 const sw=$('sel-wrap');
 sw.addEventListener('mousedown',  e=>{dragging=true; selStart=selEnd=getPos(e); drawSel();});
-sw.addEventListener('mousemove',  e=>{if(!dragging) return; selEnd=getPos(e); drawSel();});
+sw.addEventListener('mousemove',  e=>{if(!dragging)return; selEnd=getPos(e); drawSel();});
 sw.addEventListener('mouseup',    e=>{dragging=false; selEnd=getPos(e); drawSel(); chkSel();});
 sw.addEventListener('touchstart', e=>{e.preventDefault(); dragging=true; selStart=selEnd=getPos(e); drawSel();},{passive:false});
-sw.addEventListener('touchmove',  e=>{e.preventDefault(); if(!dragging) return; selEnd=getPos(e); drawSel();},{passive:false});
+sw.addEventListener('touchmove',  e=>{e.preventDefault(); if(!dragging)return; selEnd=getPos(e); drawSel();},{passive:false});
 sw.addEventListener('touchend',   e=>{e.preventDefault(); dragging=false; chkSel();},{passive:false});
 
 function chkSel(){
@@ -304,7 +290,6 @@ function confirmROI(){
   requestAnimationFrame(()=>requestAnimationFrame(()=>{ syncOv(); if(cvReady) runDetect(); }));
 }
 
-// ── overlay ───────────────────────────────────────────
 function syncOv(){
   const wrap=$('img-wrap').getBoundingClientRect();
   const r=$('photo').getBoundingClientRect();
@@ -314,7 +299,7 @@ function syncOv(){
   ov.style.top =Math.round(r.top -wrap.top )+'px';
 }
 
-// ── 自動スイープ検知 ──────────────────────────────────
+// ── メイン検知 ────────────────────────────────────────
 function runDetect(){
   if(!roiRect) return;
   const roi=roiRect;
@@ -322,12 +307,14 @@ function runDetect(){
   procW=Math.max(1,Math.round(roi.w*scale));
   procH=Math.max(1,Math.round(roi.h*scale));
 
-  // スケール後の半径
-  const minR=Math.max(2, Math.round(MIN_R*scale));
-  const maxR=Math.round(MAX_R*scale);
-
   proc.width=procW; proc.height=procH;
   pctx.drawImage($('photo'), roi.x,roi.y,roi.w,roi.h, 0,0,procW,procH);
+
+  // ── 半径を ROI から自動推定 ────────────────────────
+  // 棒が横に並んでいると仮定 → 幅の 1/40 〜 幅の 1/4 を半径レンジとする
+  // ただし min=4px, max=120px に制限
+  const estMinR = Math.max(4,  Math.round(procW / 60));
+  const estMaxR = Math.min(120, Math.round(procW / 4));
 
   let src,gray,blur;
   try{
@@ -336,62 +323,85 @@ function runDetect(){
     cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
     cv.GaussianBlur(gray,blur,new cv.Size(7,7),1.5);
 
-    // ── param2 スイープ ──────────────────────────────
+    // ── スイープ ──────────────────────────────────────
     const counts=[];
-    const circs=[];
+    const circs =[];
+    const minDist=Math.max(estMinR*2, Math.round(estMinR*2.2)); // 密集対応で小さめ
 
     setProgress(0);
-    for(let i=0;i<P2_SWEEP.length;i++){
-      const p2=P2_SWEEP[i];
+    for(let i=0;i<P2_LIST.length;i++){
       const c=new cv.Mat();
-      const md=Math.max(minR, Math.round(minR*1.8));
-      cv.HoughCircles(blur,c,cv.HOUGH_GRADIENT,1.2,md,55,p2,minR,maxR);
+      cv.HoughCircles(blur,c,cv.HOUGH_GRADIENT,
+        1.0,        // dp=1.0 でより精密
+        minDist,
+        55,         // param1 Canny上限
+        P2_LIST[i], // param2 投票閾値
+        estMinR,
+        estMaxR
+      );
       counts.push(c.cols);
       circs.push(c);
-      setProgress(Math.round((i+1)/P2_SWEEP.length*100));
+      setProgress(Math.round((i+1)/P2_LIST.length*100));
     }
 
-    // ── 安定点を自動選択 ─────────────────────────────
-    // 「最初に count > 0 で、次のステップで GROWTH_TH 倍以上急増する直前」を採用
-    // 全部0なら感度最大の結果を使う
-    let bestIdx = P2_SWEEP.length - 1; // fallback: 最も感度高い
-    for(let i=0;i<counts.length-1;i++){
-      if(counts[i]===0) continue;  // まだ検知なし → 続ける
-      // この時点で何かは検知している
-      const next=counts[i+1];
-      if(next > counts[i] * GROWTH_TH){
-        // 急増ポイント発見 → i を採用
-        bestIdx=i;
-        break;
+    // ── プラトー検出 ──────────────────────────────────
+    // 連続 PLATEAU_WINDOW 点の max/min < PLATEAU_RATIO を安定とみなす
+    let bestIdx = -1;
+
+    // 最初にカウントが0より大きくなる点を探す
+    let firstNonZero = -1;
+    for(let i=0;i<counts.length;i++){
+      if(counts[i]>0){ firstNonZero=i; break; }
+    }
+
+    if(firstNonZero >= 0){
+      // プラトー探索: firstNonZero 以降で最初の安定区間
+      for(let i=firstNonZero; i<=counts.length-PLATEAU_WINDOW; i++){
+        const window=counts.slice(i, i+PLATEAU_WINDOW);
+        const mx=Math.max(...window), mn=Math.min(...window);
+        if(mn>0 && mx/mn < PLATEAU_RATIO){
+          // 安定区間発見 → 窓の中の最大値のインデックスを採用
+          bestIdx = i + window.indexOf(mx);
+          break;
+        }
       }
-      // 急増していないが一定検知している → 更新し続ける
-      bestIdx=i;
+
+      // プラトーが見つからない場合 → 中央値付近のインデックスを採用
+      if(bestIdx < 0){
+        const nonZero=counts.map((v,i)=>({v,i})).filter(x=>x.v>0);
+        if(nonZero.length>0){
+          // ソートして中央値
+          const sorted=[...nonZero].sort((a,b)=>a.v-b.v);
+          const medItem=sorted[Math.floor(sorted.length*0.5)];
+          bestIdx=medItem.i;
+        }
+      }
     }
 
-    // 選ばれたカウントの Mat から座標を保存
-    const best=circs[bestIdx];
+    // ── 結果保存 ──────────────────────────────────────
     lastCircles=[];
-    for(let i=0;i<best.cols;i++){
-      lastCircles.push({
-        cx:best.data32F[i*3],
-        cy:best.data32F[i*3+1],
-        r :best.data32F[i*3+2],
-      });
+    if(bestIdx>=0){
+      const best=circs[bestIdx];
+      for(let i=0;i<best.cols;i++){
+        lastCircles.push({
+          cx:best.data32F[i*3],
+          cy:best.data32F[i*3+1],
+          r :best.data32F[i*3+2],
+        });
+      }
     }
-
-    // 残りの Mat を解放
     circs.forEach(c=>c.delete());
 
     $('count-num').textContent=lastCircles.length;
     syncOv(); drawResult();
 
     if(lastCircles.length===0)
-      showHint('⚠ 検知なし ― 端面だけを囲んで「範囲選び直し」するか、端面がはっきり見える写真を使ってください。');
-    else hideHint();
+      showHint('⚠ 検知なし ― 端面の断面だけを囲んで「範囲選び直し」してください。端面が見えていない場合は撮影角度を変えてください。');
+    else
+      hideHint();
 
   }catch(e){
-    console.error(e);
-    $('count-num').textContent='0';
+    console.error(e); $('count-num').textContent='0';
     showErr('解析エラー: '+(e.message||e));
     octx.clearRect(0,0,$('overlay').width,$('overlay').height);
   }finally{
@@ -409,20 +419,23 @@ function drawResult(){
   const sx=rw/procW, sy=rh/procH, sc=(sx+sy)/2;
 
   octx.clearRect(0,0,ov.width,ov.height);
-  // ROI枠
-  octx.strokeStyle='rgba(136,255,68,0.4)'; octx.lineWidth=1.5; octx.setLineDash([5,4]);
+  octx.strokeStyle='rgba(136,255,68,0.35)'; octx.lineWidth=1.5; octx.setLineDash([5,4]);
   octx.strokeRect(ox,oy,rw,rh); octx.setLineDash([]);
 
   lastCircles.forEach((d,i)=>{
     const cx=ox+d.cx*sx, cy=oy+d.cy*sy, r=d.r*sc;
-    octx.beginPath(); octx.arc(cx,cy,r+5,0,Math.PI*2);
-    octx.strokeStyle='rgba(255,34,34,0.18)'; octx.lineWidth=10; octx.stroke();
+    // グロー
+    octx.beginPath(); octx.arc(cx,cy,r+4,0,Math.PI*2);
+    octx.strokeStyle='rgba(255,34,34,0.2)'; octx.lineWidth=9; octx.stroke();
+    // 赤枠
     octx.beginPath(); octx.arc(cx,cy,r,0,Math.PI*2);
-    octx.strokeStyle='#ff2222'; octx.lineWidth=3; octx.stroke();
-    octx.beginPath(); octx.arc(cx,cy,3,0,Math.PI*2);
+    octx.strokeStyle='#ff2222'; octx.lineWidth=2.5; octx.stroke();
+    // 中心
+    octx.beginPath(); octx.arc(cx,cy,2.5,0,Math.PI*2);
     octx.fillStyle='#ff2222'; octx.fill();
-    if(r>=9){
-      const fs=Math.max(8,Math.min(r*.6,18));
+    // 番号（小さい円では省略）
+    if(r>=10){
+      const fs=Math.max(7,Math.min(r*.55,16));
       octx.font=`bold ${fs}px Arial`; octx.textAlign='center'; octx.textBaseline='middle';
       octx.fillStyle='rgba(0,0,0,.7)'; octx.fillText(i+1,cx+1,cy+1);
       octx.fillStyle='#fff';           octx.fillText(i+1,cx,  cy);
@@ -443,7 +456,7 @@ function drawEdge(){
     src=cv.imread(proc); gray=new cv.Mat(); blur=new cv.Mat(); edges=new cv.Mat();
     cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
     cv.GaussianBlur(gray,blur,new cv.Size(7,7),1.5);
-    cv.Canny(blur,edges,30,80);
+    cv.Canny(blur,edges,25,75);
     cv.imshow(proc,edges);
     syncOv();
     const photo=$('photo'), ov=$('overlay'), pr=photo.getBoundingClientRect();
@@ -452,9 +465,9 @@ function drawEdge(){
     octx.clearRect(0,0,ov.width,ov.height);
     octx.fillStyle='rgba(0,0,0,.68)'; octx.fillRect(0,0,ov.width,ov.height);
     octx.drawImage(proc,0,0,pw,ph, ox,oy,dw,dh);
-    octx.strokeStyle='rgba(136,255,68,0.5)'; octx.lineWidth=1.5; octx.setLineDash([5,4]);
+    octx.strokeStyle='rgba(136,255,68,.45)'; octx.lineWidth=1.5; octx.setLineDash([5,4]);
     octx.strokeRect(ox,oy,dw,dh); octx.setLineDash([]);
-    showHint('エッジ確認：端面の縁がリング状に白く出ているか確認してください。');
+    showHint('エッジ確認：端面の縁がリング状に白く出ていれば検知できます。');
   }catch(e){console.error(e);}
   finally{
     if(src)  src.delete(); if(gray) gray.delete();
@@ -472,7 +485,6 @@ function resetAll(){
   $('input-camera').value=''; $('input-gallery').value='';
 }
 
-// ── ヘルパー ──────────────────────────────────────────
 function showSpinner(m){ $('spinner').classList.remove('hidden'); $('spin-msg').textContent=m; }
 function hideSpinner() { $('spinner').classList.add('hidden'); }
 function setProgress(p){ $('progress-wrap').style.display='block'; $('progress-bar').style.width=p+'%'; }
