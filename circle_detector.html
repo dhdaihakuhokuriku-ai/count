@@ -30,10 +30,10 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 #sel-screen{position:fixed;inset:0;z-index:25;display:none;flex-direction:column;background:#000;}
 #sel-header{flex-shrink:0;background:#0a1a00;padding:10px 14px 8px;border-bottom:1px solid #1a2a00;}
 #sel-header p{font-size:13px;color:#88ff44;font-weight:700;margin-bottom:3px;}
-#sel-header small{font-size:10px;color:#556655;line-height:1.5;}
+#sel-header small{font-size:10px;color:#667766;line-height:1.6;}
 #sel-btns{flex-shrink:0;display:flex;gap:8px;padding:8px 14px;background:#000;border-bottom:1px solid #1a1a1a;}
-#sel-reset{flex:1;background:#222;color:#aaa;border:1px solid #333;font-size:12px;font-weight:700;padding:10px 0;border-radius:4px;cursor:pointer;}
-#sel-go{flex:2;background:#ff2222;color:#fff;border:none;font-size:14px;font-weight:700;padding:10px 0;border-radius:4px;cursor:pointer;}
+#sel-reset{flex:1;background:#222;color:#aaa;border:1px solid #333;font-size:12px;font-weight:700;padding:12px 0;border-radius:4px;cursor:pointer;}
+#sel-go{flex:2;background:#ff2222;color:#fff;border:none;font-size:14px;font-weight:700;padding:12px 0;border-radius:4px;cursor:pointer;}
 #sel-go:disabled{opacity:.3;cursor:default;}
 #sel-wrap{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000;touch-action:none;}
 #sel-img{max-width:100%;max-height:100%;object-fit:contain;display:block;user-select:none;pointer-events:none;}
@@ -44,21 +44,18 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 
 /* 結果 */
 #res-screen{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;background:#000;}
-#count-bar{flex-shrink:0;background:rgba(0,0,0,.95);text-align:center;padding:14px 0 10px;border-bottom:1px solid #1a1a1a;}
+#count-bar{flex-shrink:0;background:#000;text-align:center;padding:14px 0 10px;border-bottom:1px solid #1a1a1a;}
 #count-lbl{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.2em;}
 #count-num{font-size:100px;font-weight:900;line-height:1;color:#fff;
   text-shadow:0 0 30px rgba(255,40,40,.8),0 2px 10px rgba(0,0,0,1);letter-spacing:-4px;}
 
 #btn-bar{flex-shrink:0;display:flex;gap:8px;padding:10px 14px;background:rgba(0,0,0,.9);border-bottom:1px solid #1a1a1a;}
-.act-btn{flex:1;border:none;font-size:13px;font-weight:700;padding:12px 0;border-radius:4px;cursor:pointer;letter-spacing:.04em;}
+.act-btn{flex:1;border:none;font-size:13px;font-weight:700;padding:12px 0;border-radius:4px;cursor:pointer;}
 .act-btn:active{filter:brightness(.75);}
 #rerun-btn{background:#ff2222;color:#fff;}
 #resel-btn{background:#1a1400;color:#ffcc00;border:1px solid #443300;font-size:12px;}
 #edge-btn{background:#1a1a1a;color:#777;border:1px solid #333;font-size:12px;}
 #edge-btn.on{background:#001a00;color:#0f0;border-color:#0f0;}
-
-#progress-wrap{flex-shrink:0;height:4px;background:#1a1a1a;display:none;}
-#progress-bar{height:100%;background:#ff2222;width:0%;transition:width .15s;}
 
 #hint{flex-shrink:0;padding:6px 14px;font-size:10px;color:#aa8800;
   background:#1a1400;border-bottom:1px solid #2a2000;display:none;line-height:1.5;}
@@ -72,7 +69,7 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 #spinner svg{width:44px;height:44px;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 #spinner.hidden{display:none;}
-#spin-msg{font-size:12px;color:#aaa;letter-spacing:.06em;}
+#spin-msg{font-size:13px;color:#aaa;}
 
 #back-btn{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
   background:rgba(0,0,0,.72);border:1px solid #444;color:#ccc;
@@ -99,13 +96,13 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
   </button>
   <div id="cv-badge">OpenCV 読み込み中…</div>
 </div>
-<input type="file" id="input-camera"  accept="image/*" capture="environment">
+<input type="file" id="input-camera" accept="image/*" capture="environment">
 <input type="file" id="input-gallery" accept="image/*">
 
 <div id="sel-screen">
   <div id="sel-header">
     <p>端面だけを囲んでください</p>
-    <small>⚠ 棒の側面・棚・背景は範囲に含めない<br>断面が見えている部分のみをドラッグで選択</small>
+    <small>棒の断面（丸い端面）が見えている部分だけを<br>ドラッグで選択 → 棚・側面・背景は含めない</small>
   </div>
   <div id="sel-btns">
     <button id="sel-reset">やり直し</button>
@@ -128,7 +125,6 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
     <button class="act-btn" id="resel-btn">範囲選び直し</button>
     <button class="act-btn" id="edge-btn">エッジ確認</button>
   </div>
-  <div id="progress-wrap"><div id="progress-bar"></div></div>
   <div id="hint"></div>
   <div id="img-wrap">
     <img id="photo" alt="">
@@ -137,7 +133,7 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
       <svg viewBox="0 0 24 24" fill="none" stroke="#ff2222" stroke-width="2.5" stroke-linecap="round">
         <path d="M12 2a10 10 0 1 0 10 10"/>
       </svg>
-      <p id="spin-msg">自動解析中…</p>
+      <p id="spin-msg">解析中…</p>
     </div>
     <div id="err-box"></div>
   </div>
@@ -150,29 +146,22 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 <script async src="https://docs.opencv.org/4.8.0/opencv.js"
   onload="onCvReady()" onerror="onCvError()"></script>
 <script>
-// ══════════════════════════════════════════════════════
-//  プラトー検出スイープ方式
-//
-//  1. param2を高→低にスイープ（16段階）
-//  2. カウントが「プラトー（横ばい）」になる区間を検出
-//     → 連続3点のmax/min < 1.25 を安定とみなす
-//  3. 最初に見つかった安定プラトーを採用
-//  4. プラトーなし → カウントの中央値付近を採用
-//
-//  minDist: minR × 1.3（密集棒に対応、前回より小さい）
-//  半径範囲: ROIの幅から自動推定（棒が横に並んでいる想定）
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+//  設計方針
+//  ─────────────────────────────────────────────────────────
+//  ① 処理解像度を 600px に抑えて高速化
+//  ② 半径上限 = ROI短辺の 1/3（束全体を1円と検知しない）
+//  ③ 半径下限 = ROI短辺の 1/25
+//  ④ スイープは 6 ステップのみ（速度優先）
+//  ⑤ 安定点: カウントが最初に「増加停止した」ステップを採用
+//     増加停止 = 次ステップの増分が前増分の 30% 未満
+// ═══════════════════════════════════════════════════════════
 
-const PROC_MAX = 900;
+const PROC_MAX = 600;  // ← 900→600 で約2倍速
 
-// スイープ: 厳格(高) → 緩い(低)
-const P2_LIST = [55, 48, 42, 37, 32, 28, 24, 21, 18, 16, 14, 12, 10, 9, 8, 7];
+// param2スイープ (厳格→緩い)  6ステップのみ
+const P2_LIST = [40, 30, 22, 16, 12, 9];
 
-// プラトー判定: 連続N点のmax/min がこの倍率以下
-const PLATEAU_WINDOW = 3;
-const PLATEAU_RATIO  = 1.25;
-
-// ── 状態 ─────────────────────────────────────────────
 let cvReady=false, imgLoaded=false, edgeMode=false;
 let roiRect=null, lastCircles=[], procW=0, procH=0;
 let selStart=null, selEnd=null, dragging=false;
@@ -183,13 +172,12 @@ const octx=$('overlay').getContext('2d');
 const sctx=$('sel-cv').getContext('2d');
 
 function onCvReady(){
-  cvReady=true;
-  $('cv-badge').textContent='OpenCV 準備完了'; $('cv-badge').className='ok';
+  cvReady=true; $('cv-badge').textContent='準備完了'; $('cv-badge').className='ok';
   $('cv-tag').textContent='CV OK';
   if(imgLoaded&&roiRect) runDetect();
 }
 function onCvError(){
-  $('cv-badge').textContent='OpenCV 読み込み失敗'; $('cv-badge').className='err';
+  $('cv-badge').textContent='CV 読み込み失敗'; $('cv-badge').className='err';
 }
 
 $('btn-camera') .addEventListener('click',()=>$('input-camera') .click());
@@ -200,8 +188,8 @@ $('input-gallery').addEventListener('change',e=>loadFile(e.target.files[0]));
 $('rerun-btn').addEventListener('click',()=>{
   if(!imgLoaded||!cvReady||!roiRect) return;
   edgeMode=false; $('edge-btn').classList.remove('on');
-  hideHint(); showSpinner('自動解析中…'); $('count-num').textContent='…';
-  setTimeout(runDetect,30);
+  hideHint(); showSpinner('解析中…'); $('count-num').textContent='…';
+  setTimeout(runDetect,20);
 });
 $('resel-btn').addEventListener('click',goToSelect);
 $('edge-btn').addEventListener('click',()=>{
@@ -247,15 +235,19 @@ function drawSel(){
   if(!selStart||!selEnd) return;
   const x=Math.min(selStart.x,selEnd.x), y=Math.min(selStart.y,selEnd.y);
   const w=Math.abs(selEnd.x-selStart.x), h=Math.abs(selEnd.y-selStart.y);
+  // 選択外を暗く
   sctx.fillStyle='rgba(0,0,0,.55)'; sctx.fillRect(0,0,sc.width,sc.height);
   sctx.clearRect(x,y,w,h);
-  sctx.strokeStyle='#88ff44'; sctx.lineWidth=2.5; sctx.strokeRect(x,y,w,h);
-  const cs=12; sctx.strokeStyle='#fff'; sctx.lineWidth=3;
+  // 枠
+  sctx.strokeStyle='#88ff44'; sctx.lineWidth=2; sctx.strokeRect(x,y,w,h);
+  // コーナー
+  const cs=10; sctx.strokeStyle='#fff'; sctx.lineWidth=2.5;
   [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([px,py])=>{
     const dx=px===x?1:-1, dy=py===y?1:-1;
     sctx.beginPath(); sctx.moveTo(px+dx*cs,py); sctx.lineTo(px,py); sctx.lineTo(px,py+dy*cs); sctx.stroke();
   });
-  sctx.font='bold 11px Arial'; sctx.textAlign='center'; sctx.fillStyle='rgba(136,255,68,.8)';
+  // サイズ
+  sctx.font='bold 11px Arial'; sctx.textAlign='center'; sctx.fillStyle='rgba(136,255,68,.85)';
   sctx.fillText(`${Math.round(w)}×${Math.round(h)}`, x+w/2, y>18?y-5:y+h+14);
 }
 
@@ -273,20 +265,19 @@ sw.addEventListener('touchmove',  e=>{e.preventDefault(); if(!dragging)return; s
 sw.addEventListener('touchend',   e=>{e.preventDefault(); dragging=false; chkSel();},{passive:false});
 
 function chkSel(){
-  if(!selStart||!selEnd) return;
+  if(!selStart||!selEnd)return;
   $('sel-go').disabled=(Math.abs(selEnd.x-selStart.x)<20||Math.abs(selEnd.y-selStart.y)<20);
 }
 
 function confirmROI(){
-  const img=$('sel-img');
-  const pr=img.getBoundingClientRect();
+  const img=$('sel-img'), pr=img.getBoundingClientRect();
   const sx=img.naturalWidth/pr.width, sy=img.naturalHeight/pr.height;
   const x=Math.min(selStart.x,selEnd.x), y=Math.min(selStart.y,selEnd.y);
   const w=Math.abs(selEnd.x-selStart.x), h=Math.abs(selEnd.y-selStart.y);
-  roiRect={x:Math.round(x*sx), y:Math.round(y*sy), w:Math.round(w*sx), h:Math.round(h*sy)};
+  roiRect={x:Math.round(x*sx),y:Math.round(y*sy),w:Math.round(w*sx),h:Math.round(h*sy)};
   $('sel-screen').style.display='none'; $('res-screen').style.display='flex';
   $('count-num').textContent='…'; edgeMode=false; $('edge-btn').classList.remove('on');
-  hideHint(); showSpinner(cvReady?'自動解析中…':'OpenCV 読み込み中…');
+  hideHint(); showSpinner(cvReady?'解析中…':'CV 読み込み待機中…');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{ syncOv(); if(cvReady) runDetect(); }));
 }
 
@@ -299,96 +290,77 @@ function syncOv(){
   ov.style.top =Math.round(r.top -wrap.top )+'px';
 }
 
-// ── メイン検知 ────────────────────────────────────────
+// ── 検知 ─────────────────────────────────────────────
 function runDetect(){
   if(!roiRect) return;
   const roi=roiRect;
-  const scale=Math.min(1.0, PROC_MAX/Math.max(roi.w,roi.h));
-  procW=Math.max(1,Math.round(roi.w*scale));
-  procH=Math.max(1,Math.round(roi.h*scale));
+
+  // 処理解像度（PROC_MAX=600）
+  const scale=Math.min(1.0, PROC_MAX/Math.max(roi.w, roi.h));
+  procW=Math.max(1, Math.round(roi.w*scale));
+  procH=Math.max(1, Math.round(roi.h*scale));
 
   proc.width=procW; proc.height=procH;
   pctx.drawImage($('photo'), roi.x,roi.y,roi.w,roi.h, 0,0,procW,procH);
 
-  // ── 半径を ROI から自動推定 ────────────────────────
-  // 棒が横に並んでいると仮定 → 幅の 1/40 〜 幅の 1/4 を半径レンジとする
-  // ただし min=4px, max=120px に制限
-  const estMinR = Math.max(4,  Math.round(procW / 60));
-  const estMaxR = Math.min(120, Math.round(procW / 4));
+  // ── 半径推定 ──────────────────────────────────────
+  // 短辺を基準にする（棒が縦でも横でも対応）
+  const shortSide = Math.min(procW, procH);
+  const minR = Math.max(3,  Math.round(shortSide / 25)); // 短辺の 4%
+  const maxR = Math.max(minR+2, Math.round(shortSide / 3));  // 短辺の 33% ← 上限を厳しく
+  const minDist = Math.max(minR*2, Math.round(minR * 2.0));
 
   let src,gray,blur;
   try{
     src =cv.imread(proc);
     gray=new cv.Mat(); blur=new cv.Mat();
     cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
-    cv.GaussianBlur(gray,blur,new cv.Size(7,7),1.5);
+    cv.GaussianBlur(gray,blur,new cv.Size(5,5),1.2); // カーネル縮小で高速化
 
-    // ── スイープ ──────────────────────────────────────
-    const counts=[];
-    const circs =[];
-    const minDist=Math.max(estMinR*2, Math.round(estMinR*2.2)); // 密集対応で小さめ
-
-    setProgress(0);
+    // ── 6ステップスイープ ─────────────────────────
+    const counts=[]; const circs=[];
     for(let i=0;i<P2_LIST.length;i++){
       const c=new cv.Mat();
       cv.HoughCircles(blur,c,cv.HOUGH_GRADIENT,
-        1.0,        // dp=1.0 でより精密
-        minDist,
-        55,         // param1 Canny上限
-        P2_LIST[i], // param2 投票閾値
-        estMinR,
-        estMaxR
-      );
+        1.0, minDist, 50, P2_LIST[i], minR, maxR);
       counts.push(c.cols);
       circs.push(c);
-      setProgress(Math.round((i+1)/P2_LIST.length*100));
     }
 
-    // ── プラトー検出 ──────────────────────────────────
-    // 連続 PLATEAU_WINDOW 点の max/min < PLATEAU_RATIO を安定とみなす
-    let bestIdx = -1;
+    // ── 安定点選択 ────────────────────────────────
+    // 「増加が鈍化した最初の点」を採用
+    // 具体的: counts[i+1] - counts[i] < (counts[i] - counts[i-1]) * 0.4
+    let bestIdx = 0;
 
-    // 最初にカウントが0より大きくなる点を探す
-    let firstNonZero = -1;
+    // まず最初にカウント>0になる点を探す
+    let start=-1;
     for(let i=0;i<counts.length;i++){
-      if(counts[i]>0){ firstNonZero=i; break; }
+      if(counts[i]>0){ start=i; break; }
     }
 
-    if(firstNonZero >= 0){
-      // プラトー探索: firstNonZero 以降で最初の安定区間
-      for(let i=firstNonZero; i<=counts.length-PLATEAU_WINDOW; i++){
-        const window=counts.slice(i, i+PLATEAU_WINDOW);
-        const mx=Math.max(...window), mn=Math.min(...window);
-        if(mn>0 && mx/mn < PLATEAU_RATIO){
-          // 安定区間発見 → 窓の中の最大値のインデックスを採用
-          bestIdx = i + window.indexOf(mx);
+    if(start>=0){
+      bestIdx=start;
+      for(let i=start+1; i<counts.length-1; i++){
+        const prev = counts[i]   - counts[i-1];  // 前の増加量
+        const next = counts[i+1] - counts[i];    // 次の増加量
+        // 増加量が前の40%未満になった = 飽和点 → i を採用
+        if(prev > 0 && next < prev * 0.4){
+          bestIdx = i;
           break;
         }
-      }
-
-      // プラトーが見つからない場合 → 中央値付近のインデックスを採用
-      if(bestIdx < 0){
-        const nonZero=counts.map((v,i)=>({v,i})).filter(x=>x.v>0);
-        if(nonZero.length>0){
-          // ソートして中央値
-          const sorted=[...nonZero].sort((a,b)=>a.v-b.v);
-          const medItem=sorted[Math.floor(sorted.length*0.5)];
-          bestIdx=medItem.i;
-        }
+        bestIdx = i; // 更新し続ける
       }
     }
 
-    // ── 結果保存 ──────────────────────────────────────
+    // 結果保存
     lastCircles=[];
-    if(bestIdx>=0){
-      const best=circs[bestIdx];
-      for(let i=0;i<best.cols;i++){
-        lastCircles.push({
-          cx:best.data32F[i*3],
-          cy:best.data32F[i*3+1],
-          r :best.data32F[i*3+2],
-        });
-      }
+    const best=circs[bestIdx];
+    for(let i=0;i<best.cols;i++){
+      lastCircles.push({
+        cx: best.data32F[i*3],
+        cy: best.data32F[i*3+1],
+        r:  best.data32F[i*3+2],
+      });
     }
     circs.forEach(c=>c.delete());
 
@@ -396,7 +368,7 @@ function runDetect(){
     syncOv(); drawResult();
 
     if(lastCircles.length===0)
-      showHint('⚠ 検知なし ― 端面の断面だけを囲んで「範囲選び直し」してください。端面が見えていない場合は撮影角度を変えてください。');
+      showHint('検知なし ― 端面の断面だけを囲んで「範囲選び直し」してください。');
     else
       hideHint();
 
@@ -406,39 +378,40 @@ function runDetect(){
     octx.clearRect(0,0,$('overlay').width,$('overlay').height);
   }finally{
     if(src) src.delete(); if(gray) gray.delete(); if(blur) blur.delete();
-    hideSpinner(); hideProgress();
+    hideSpinner();
   }
 }
 
 // ── 描画 ─────────────────────────────────────────────
 function drawResult(){
   const photo=$('photo'), ov=$('overlay'), pr=photo.getBoundingClientRect();
-  const imgSX=pr.width/photo.naturalWidth, imgSY=pr.height/photo.naturalHeight;
-  const ox=roiRect.x*imgSX, oy=roiRect.y*imgSY;
-  const rw=roiRect.w*imgSX, rh=roiRect.h*imgSY;
+  const isx=pr.width/photo.naturalWidth, isy=pr.height/photo.naturalHeight;
+  const ox=roiRect.x*isx, oy=roiRect.y*isy;
+  const rw=roiRect.w*isx, rh=roiRect.h*isy;
   const sx=rw/procW, sy=rh/procH, sc=(sx+sy)/2;
 
   octx.clearRect(0,0,ov.width,ov.height);
-  octx.strokeStyle='rgba(136,255,68,0.35)'; octx.lineWidth=1.5; octx.setLineDash([5,4]);
+  // ROI枠
+  octx.strokeStyle='rgba(136,255,68,.3)'; octx.lineWidth=1.5; octx.setLineDash([4,4]);
   octx.strokeRect(ox,oy,rw,rh); octx.setLineDash([]);
 
   lastCircles.forEach((d,i)=>{
     const cx=ox+d.cx*sx, cy=oy+d.cy*sy, r=d.r*sc;
     // グロー
-    octx.beginPath(); octx.arc(cx,cy,r+4,0,Math.PI*2);
-    octx.strokeStyle='rgba(255,34,34,0.2)'; octx.lineWidth=9; octx.stroke();
+    octx.beginPath(); octx.arc(cx,cy,r+3,0,Math.PI*2);
+    octx.strokeStyle='rgba(255,34,34,.18)'; octx.lineWidth=8; octx.stroke();
     // 赤枠
     octx.beginPath(); octx.arc(cx,cy,r,0,Math.PI*2);
     octx.strokeStyle='#ff2222'; octx.lineWidth=2.5; octx.stroke();
     // 中心
     octx.beginPath(); octx.arc(cx,cy,2.5,0,Math.PI*2);
     octx.fillStyle='#ff2222'; octx.fill();
-    // 番号（小さい円では省略）
-    if(r>=10){
-      const fs=Math.max(7,Math.min(r*.55,16));
+    // 番号
+    if(r>=8){
+      const fs=Math.max(7,Math.min(r*.55,15));
       octx.font=`bold ${fs}px Arial`; octx.textAlign='center'; octx.textBaseline='middle';
-      octx.fillStyle='rgba(0,0,0,.7)'; octx.fillText(i+1,cx+1,cy+1);
-      octx.fillStyle='#fff';           octx.fillText(i+1,cx,  cy);
+      octx.fillStyle='rgba(0,0,0,.75)'; octx.fillText(i+1,cx+1,cy+1);
+      octx.fillStyle='#fff';            octx.fillText(i+1,cx,  cy);
     }
   });
 }
@@ -447,27 +420,27 @@ function drawResult(){
 function drawEdge(){
   if(!cvReady||!imgLoaded||!roiRect) return;
   const roi=roiRect;
-  const scale=Math.min(1.0, PROC_MAX/Math.max(roi.w,roi.h));
+  const scale=Math.min(1.0,PROC_MAX/Math.max(roi.w,roi.h));
   const pw=Math.max(1,Math.round(roi.w*scale)), ph=Math.max(1,Math.round(roi.h*scale));
   proc.width=pw; proc.height=ph;
-  pctx.drawImage($('photo'), roi.x,roi.y,roi.w,roi.h, 0,0,pw,ph);
+  pctx.drawImage($('photo'),roi.x,roi.y,roi.w,roi.h,0,0,pw,ph);
   let src,gray,blur,edges;
   try{
     src=cv.imread(proc); gray=new cv.Mat(); blur=new cv.Mat(); edges=new cv.Mat();
     cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
-    cv.GaussianBlur(gray,blur,new cv.Size(7,7),1.5);
-    cv.Canny(blur,edges,25,75);
+    cv.GaussianBlur(gray,blur,new cv.Size(5,5),1.2);
+    cv.Canny(blur,edges,25,70);
     cv.imshow(proc,edges);
     syncOv();
-    const photo=$('photo'), ov=$('overlay'), pr=photo.getBoundingClientRect();
-    const imgSX=pr.width/photo.naturalWidth, imgSY=pr.height/photo.naturalHeight;
-    const ox=roi.x*imgSX, oy=roi.y*imgSY, dw=roi.w*imgSX, dh=roi.h*imgSY;
+    const photo=$('photo'),ov=$('overlay'),pr=photo.getBoundingClientRect();
+    const isx=pr.width/photo.naturalWidth, isy=pr.height/photo.naturalHeight;
+    const ox=roi.x*isx, oy=roi.y*isy, dw=roi.w*isx, dh=roi.h*isy;
     octx.clearRect(0,0,ov.width,ov.height);
     octx.fillStyle='rgba(0,0,0,.68)'; octx.fillRect(0,0,ov.width,ov.height);
-    octx.drawImage(proc,0,0,pw,ph, ox,oy,dw,dh);
-    octx.strokeStyle='rgba(136,255,68,.45)'; octx.lineWidth=1.5; octx.setLineDash([5,4]);
+    octx.drawImage(proc,0,0,pw,ph,ox,oy,dw,dh);
+    octx.strokeStyle='rgba(136,255,68,.4)'; octx.lineWidth=1.5; octx.setLineDash([4,4]);
     octx.strokeRect(ox,oy,dw,dh); octx.setLineDash([]);
-    showHint('エッジ確認：端面の縁がリング状に白く出ていれば検知できます。');
+    showHint('エッジ確認：端面の縁がリング状に白く出ていればOKです。');
   }catch(e){console.error(e);}
   finally{
     if(src)  src.delete(); if(gray) gray.delete();
@@ -475,20 +448,16 @@ function drawEdge(){
   }
 }
 
-// ── リセット ──────────────────────────────────────────
 function resetAll(){
   $('res-screen').style.display='none'; $('sel-screen').style.display='none';
   $('home').style.display='flex';
   imgLoaded=false; edgeMode=false; lastCircles=[]; roiRect=null; selStart=selEnd=null;
-  $('edge-btn').classList.remove('on');
-  hideErr(); hideHint(); hideProgress();
+  $('edge-btn').classList.remove('on'); hideErr(); hideHint();
   $('input-camera').value=''; $('input-gallery').value='';
 }
 
 function showSpinner(m){ $('spinner').classList.remove('hidden'); $('spin-msg').textContent=m; }
 function hideSpinner() { $('spinner').classList.add('hidden'); }
-function setProgress(p){ $('progress-wrap').style.display='block'; $('progress-bar').style.width=p+'%'; }
-function hideProgress() { $('progress-wrap').style.display='none'; $('progress-bar').style.width='0%'; }
 function showErr(m)    { const e=$('err-box'); e.textContent=m; e.style.display='block'; }
 function hideErr()     { $('err-box').style.display='none'; }
 function showHint(m)   { const h=$('hint'); h.textContent=m; h.style.display='block'; }
@@ -497,7 +466,7 @@ function hideHint()    { $('hint').style.display='none'; }
 window.addEventListener('resize',()=>{
   if($('sel-screen').style.display!=='none'){ syncSelCv(); return; }
   if(!imgLoaded||$('res-screen').style.display==='none') return;
-  syncOv(); edgeMode ? drawEdge() : drawResult();
+  syncOv(); edgeMode?drawEdge():drawResult();
 });
 </script>
 </body>
