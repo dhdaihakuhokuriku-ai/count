@@ -147,7 +147,8 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 <script>
 // ── 定数 ──────────────────────────────────────────────
 const PROC_MAX = 600;
-const P2_LIST  = [40, 30, 22, 16, 12, 9]; // param2スイープ（厳格→緩い）
+// param2スイープ（厳格→緩い）※9は誤検知が多いので除外
+const P2_LIST  = [40, 30, 22, 16, 12];
 
 // ── 状態 ──────────────────────────────────────────────
 let cvReady=false, imgLoaded=false, edgeMode=false;
@@ -315,11 +316,12 @@ function runDetect(){
   proc.height = procH;
   pctx.drawImage($('photo'), roi.x, roi.y, roi.w, roi.h, 0, 0, procW, procH);
 
-  // 半径レンジ：短辺基準で上限を厳しく
-  const shortSide = Math.min(procW, procH);
-  const minR    = Math.max(3,     Math.round(shortSide / 25));
-  const maxR    = Math.max(minR+2, Math.round(shortSide / 4));
-  const minDist = Math.max(minR*2, Math.round(minR * 2.2));
+  // 半径レンジ：ROIの高さ(procH)を基準にする
+  // → 棒の端面はROI高さの1/2〜1/8程度のサイズになるはず
+  const refH    = procH;
+  const minR    = Math.max(5, Math.round(refH / 7));    // ROI高さの1/7
+  const maxR    = Math.max(minR + 5, Math.round(refH / 2)); // ROI高さの1/2
+  const minDist = Math.max(Math.round(minR * 1.8), Math.round(refH / 3)); // ROI高さの1/3
 
   let src, gray, blur;
   try{
