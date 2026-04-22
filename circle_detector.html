@@ -26,7 +26,6 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 #cv-badge.ok{color:#00cc66;border-color:#00cc66;}
 #cv-badge.err{color:#f44;border-color:#f44;}
 
-/* ROI選択 */
 #sel-screen{position:fixed;inset:0;z-index:25;display:none;flex-direction:column;background:#000;}
 #sel-header{flex-shrink:0;background:#0a1a00;padding:10px 14px 8px;border-bottom:1px solid #1a2a00;}
 #sel-header p{font-size:13px;color:#88ff44;font-weight:700;margin-bottom:3px;}
@@ -42,7 +41,6 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
   background:rgba(0,0,0,.72);border:1px solid #444;color:#ccc;
   font-size:13px;font-weight:700;padding:10px 28px;border-radius:26px;cursor:pointer;z-index:5;}
 
-/* 結果 */
 #res-screen{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;background:#000;}
 #count-bar{flex-shrink:0;background:#000;text-align:center;padding:14px 0 10px;border-bottom:1px solid #1a1a1a;}
 #count-lbl{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.2em;}
@@ -102,7 +100,7 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 <div id="sel-screen">
   <div id="sel-header">
     <p>端面だけを囲んでください</p>
-    <small>棒の断面（丸い端面）が見えている部分だけを<br>ドラッグで選択 → 棚・側面・背景は含めない</small>
+    <small>棒の断面が見えている部分だけをドラッグで選択<br>棚・側面・背景は含めない</small>
   </div>
   <div id="sel-btns">
     <button id="sel-reset">やり直し</button>
@@ -145,242 +143,368 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 
 <script async src="https://docs.opencv.org/4.8.0/opencv.js"
   onload="onCvReady()" onerror="onCvError()"></script>
-  const PROC_MAX = 600; 
 
+<script>
+// ── 定数 ──────────────────────────────────────────────
+const PROC_MAX = 600;
+const P2_LIST  = [40, 30, 22, 16, 12, 9]; // param2スイープ（厳格→緩い）
+
+// ── 状態 ──────────────────────────────────────────────
 let cvReady=false, imgLoaded=false, edgeMode=false;
 let roiRect=null, lastCircles=[], procW=0, procH=0;
 let selStart=null, selEnd=null, dragging=false;
 
-const $=id=>document.getElementById(id);
-const proc=$('proc'), pctx=proc.getContext('2d',{willReadFrequently:true});
-const octx=$('overlay').getContext('2d');
-const sctx=$('sel-cv').getContext('2d');
+const $  = id => document.getElementById(id);
+const proc  = $('proc');
+const pctx  = proc.getContext('2d', {willReadFrequently:true});
+const octx  = $('overlay').getContext('2d');
+const sctx  = $('sel-cv').getContext('2d');
 
+// ── OpenCV ────────────────────────────────────────────
 function onCvReady(){
-  cvReady=true; $('cv-badge').textContent='準備完了'; $('cv-badge').className='ok';
+  cvReady=true;
+  $('cv-badge').textContent='準備完了';
+  $('cv-badge').className='ok';
   $('cv-tag').textContent='CV OK';
-  if(imgLoaded&&roiRect) runDetect();
+  if(imgLoaded && roiRect) runDetect();
 }
 function onCvError(){
-  $('cv-badge').textContent='CV 読み込み失敗'; $('cv-badge').className='err';
+  $('cv-badge').textContent='CV 読み込み失敗';
+  $('cv-badge').className='err';
 }
 
-$('btn-camera') .addEventListener('click',()=>$('input-camera') .click());
-$('btn-gallery').addEventListener('click',()=>$('input-gallery').click());
-$('input-camera') .addEventListener('change',e=>loadFile(e.target.files[0]));
-$('input-gallery').addEventListener('change',e=>loadFile(e.target.files[0]));
+// ── ボタン ────────────────────────────────────────────
+$('btn-camera') .addEventListener('click', ()=>$('input-camera') .click());
+$('btn-gallery').addEventListener('click', ()=>$('input-gallery').click());
+$('input-camera') .addEventListener('change', e=>loadFile(e.target.files[0]));
+$('input-gallery').addEventListener('change', e=>loadFile(e.target.files[0]));
 
-$('rerun-btn').addEventListener('click',()=>{
+$('rerun-btn').addEventListener('click', ()=>{
   if(!imgLoaded||!cvReady||!roiRect) return;
   edgeMode=false; $('edge-btn').classList.remove('on');
   hideHint(); showSpinner('解析中…'); $('count-num').textContent='…';
-  setTimeout(runDetect,20);
+  setTimeout(runDetect, 20);
 });
-$('resel-btn').addEventListener('click',goToSelect);
-$('edge-btn').addEventListener('click',()=>{
+$('resel-btn').addEventListener('click', goToSelect);
+$('edge-btn').addEventListener('click', ()=>{
   if(!imgLoaded||!roiRect) return;
-  edgeMode=!edgeMode; $('edge-btn').classList.toggle('on',edgeMode);
+  edgeMode=!edgeMode;
+  $('edge-btn').classList.toggle('on', edgeMode);
   edgeMode ? drawEdge() : drawResult();
 });
-$('back-btn').addEventListener('click',resetAll);
-$('sel-back').addEventListener('click',resetAll);
-$('sel-reset').addEventListener('click',()=>{ selStart=selEnd=null; drawSel(); $('sel-go').disabled=true; });
-$('sel-go').addEventListener('click',confirmROI);
+$('back-btn').addEventListener('click', resetAll);
+$('sel-back').addEventListener('click', resetAll);
+$('sel-reset').addEventListener('click', ()=>{ selStart=selEnd=null; drawSel(); $('sel-go').disabled=true; });
+$('sel-go').addEventListener('click', confirmROI);
 
+// ── ファイル読み込み ──────────────────────────────────
 function loadFile(file){
-  if(!file||!file.type.startsWith('image/')) return;
-  const url=URL.createObjectURL(file);
-  let n=0;
-  const done=()=>{ if(++n<2) return; URL.revokeObjectURL(url); imgLoaded=true; goToSelect(); };
-  $('sel-img').onload=done; $('photo').onload=done;
-  $('sel-img').src=url; $('photo').src=url;
+  if(!file || !file.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(file);
+  let n = 0;
+  const done = ()=>{ if(++n < 2) return; URL.revokeObjectURL(url); imgLoaded=true; goToSelect(); };
+  $('sel-img').onload = done;
+  $('photo').onload   = done;
+  $('sel-img').src = url;
+  $('photo').src   = url;
 }
 
-// ── ROI選択 ──
+// ── ROI選択 ───────────────────────────────────────────
 function goToSelect(){
-  $('home').style.display='none'; $('res-screen').style.display='none';
+  $('home').style.display='none';
+  $('res-screen').style.display='none';
   $('sel-screen').style.display='flex';
-  selStart=selEnd=null; $('sel-go').disabled=true;
+  selStart=selEnd=null;
+  $('sel-go').disabled=true;
   requestAnimationFrame(()=>requestAnimationFrame(syncSelCv));
 }
 
 function syncSelCv(){
-  const wrap=$('sel-wrap').getBoundingClientRect();
-  const r=$('sel-img').getBoundingClientRect();
-  const sc=$('sel-cv');
-  sc.width=Math.round(r.width); sc.height=Math.round(r.height);
-  sc.style.left=Math.round(r.left-wrap.left)+'px';
-  sc.style.top =Math.round(r.top -wrap.top )+'px';
+  const wrap = $('sel-wrap').getBoundingClientRect();
+  const r    = $('sel-img').getBoundingClientRect();
+  const sc   = $('sel-cv');
+  sc.width  = Math.round(r.width);
+  sc.height = Math.round(r.height);
+  sc.style.left = Math.round(r.left - wrap.left) + 'px';
+  sc.style.top  = Math.round(r.top  - wrap.top ) + 'px';
   drawSel();
 }
 
 function drawSel(){
-  const sc=$('sel-cv');
-  sctx.clearRect(0,0,sc.width,sc.height);
-  if(!selStart||!selEnd) return;
-  const x=Math.min(selStart.x,selEnd.x), y=Math.min(selStart.y,selEnd.y);
-  const w=Math.abs(selEnd.x-selStart.x), h=Math.abs(selEnd.y-selStart.y);
-  sctx.fillStyle='rgba(0,0,0,.55)'; sctx.fillRect(0,0,sc.width,sc.height);
-  sctx.clearRect(x,y,w,h);
-  sctx.strokeStyle='#88ff44'; sctx.lineWidth=2; sctx.strokeRect(x,y,w,h);
-  const cs=10; sctx.strokeStyle='#fff'; sctx.lineWidth=2.5;
+  const sc = $('sel-cv');
+  sctx.clearRect(0, 0, sc.width, sc.height);
+  if(!selStart || !selEnd) return;
+  const x = Math.min(selStart.x, selEnd.x);
+  const y = Math.min(selStart.y, selEnd.y);
+  const w = Math.abs(selEnd.x - selStart.x);
+  const h = Math.abs(selEnd.y - selStart.y);
+  sctx.fillStyle = 'rgba(0,0,0,.55)';
+  sctx.fillRect(0, 0, sc.width, sc.height);
+  sctx.clearRect(x, y, w, h);
+  sctx.strokeStyle = '#88ff44'; sctx.lineWidth = 2;
+  sctx.strokeRect(x, y, w, h);
+  const cs = 10; sctx.strokeStyle='#fff'; sctx.lineWidth=2.5;
   [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([px,py])=>{
     const dx=px===x?1:-1, dy=py===y?1:-1;
     sctx.beginPath(); sctx.moveTo(px+dx*cs,py); sctx.lineTo(px,py); sctx.lineTo(px,py+dy*cs); sctx.stroke();
   });
+  sctx.font='bold 11px Arial'; sctx.textAlign='center'; sctx.fillStyle='rgba(136,255,68,.85)';
+  sctx.fillText(`${Math.round(w)}×${Math.round(h)}`, x+w/2, y>18?y-5:y+h+14);
 }
 
 function getPos(e){
-  const r=$('sel-cv').getBoundingClientRect();
-  const t=e.touches?e.touches[0]:e;
-  return {x:t.clientX-r.left, y:t.clientY-r.top};
+  const r = $('sel-cv').getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return {x: t.clientX-r.left, y: t.clientY-r.top};
 }
-const sw=$('sel-wrap');
-sw.addEventListener('mousedown',  e=>{dragging=true; selStart=selEnd=getPos(e); drawSel();});
+
+const sw = $('sel-wrap');
+sw.addEventListener('mousedown',  e=>{dragging=true;  selStart=selEnd=getPos(e); drawSel();});
 sw.addEventListener('mousemove',  e=>{if(!dragging)return; selEnd=getPos(e); drawSel();});
 sw.addEventListener('mouseup',    e=>{dragging=false; selEnd=getPos(e); drawSel(); chkSel();});
-sw.addEventListener('touchstart', e=>{e.preventDefault(); dragging=true; selStart=selEnd=getPos(e); drawSel();},{passive:false});
+sw.addEventListener('touchstart', e=>{e.preventDefault(); dragging=true;  selStart=selEnd=getPos(e); drawSel();},{passive:false});
 sw.addEventListener('touchmove',  e=>{e.preventDefault(); if(!dragging)return; selEnd=getPos(e); drawSel();},{passive:false});
 sw.addEventListener('touchend',   e=>{e.preventDefault(); dragging=false; chkSel();},{passive:false});
 
 function chkSel(){
-  if(!selStart||!selEnd)return;
-  $('sel-go').disabled=(Math.abs(selEnd.x-selStart.x)<20||Math.abs(selEnd.y-selStart.y)<20);
+  if(!selStart||!selEnd) return;
+  $('sel-go').disabled = (Math.abs(selEnd.x-selStart.x)<20 || Math.abs(selEnd.y-selStart.y)<20);
 }
 
 function confirmROI(){
-  const img=$('sel-img'), pr=img.getBoundingClientRect();
-  const sx=img.naturalWidth/pr.width, sy=img.naturalHeight/pr.height;
-  const x=Math.min(selStart.x,selEnd.x), y=Math.min(selStart.y,selEnd.y);
-  const w=Math.abs(selEnd.x-selStart.x), h=Math.abs(selEnd.y-selStart.y);
-  roiRect={x:Math.round(x*sx),y:Math.round(y*sy),w:Math.round(w*sx),h:Math.round(h*sy)};
-  $('sel-screen').style.display='none'; $('res-screen').style.display='flex';
-  $('count-num').textContent='…'; edgeMode=false; $('edge-btn').classList.remove('on');
-  hideHint(); showSpinner(cvReady?'解析中…':'CV 読み込み待機中…');
+  const img = $('sel-img');
+  const pr  = img.getBoundingClientRect();
+  const sx  = img.naturalWidth  / pr.width;
+  const sy  = img.naturalHeight / pr.height;
+  const x = Math.min(selStart.x, selEnd.x);
+  const y = Math.min(selStart.y, selEnd.y);
+  const w = Math.abs(selEnd.x - selStart.x);
+  const h = Math.abs(selEnd.y - selStart.y);
+  roiRect = {
+    x: Math.round(x*sx), y: Math.round(y*sy),
+    w: Math.round(w*sx), h: Math.round(h*sy)
+  };
+  $('sel-screen').style.display = 'none';
+  $('res-screen').style.display = 'flex';
+  $('count-num').textContent = '…';
+  edgeMode = false; $('edge-btn').classList.remove('on');
+  hideHint();
+  showSpinner(cvReady ? '解析中…' : 'CV読み込み待機中…');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{ syncOv(); if(cvReady) runDetect(); }));
 }
 
 function syncOv(){
-  const wrap=$('img-wrap').getBoundingClientRect();
-  const r=$('photo').getBoundingClientRect();
-  const ov=$('overlay');
-  ov.width=Math.round(r.width); ov.height=Math.round(r.height);
-  ov.style.left=Math.round(r.left-wrap.left)+'px';
-  ov.style.top =Math.round(r.top -wrap.top )+'px';
+  const wrap = $('img-wrap').getBoundingClientRect();
+  const r    = $('photo').getBoundingClientRect();
+  const ov   = $('overlay');
+  ov.width  = Math.round(r.width);
+  ov.height = Math.round(r.height);
+  ov.style.left = Math.round(r.left - wrap.left) + 'px';
+  ov.style.top  = Math.round(r.top  - wrap.top ) + 'px';
 }
 
-// ── 検知：Manusアルゴリズム (輪郭抽出方式) ──
+// ── 検知：HoughCircles スイープ ───────────────────────
 function runDetect(){
   if(!roiRect) return;
-  const roi=roiRect;
-  const scale=Math.min(1.0, PROC_MAX/Math.max(roi.w, roi.h));
-  procW=Math.max(1, Math.round(roi.w*scale));
-  procH=Math.max(1, Math.round(roi.h*scale));
-  proc.width=procW; proc.height=procH;
-  pctx.drawImage($('photo'), roi.x,roi.y,roi.w,roi.h, 0,0,procW,procH);
+  const roi   = roiRect;
+  const scale = Math.min(1.0, PROC_MAX / Math.max(roi.w, roi.h));
+  procW = Math.max(1, Math.round(roi.w * scale));
+  procH = Math.max(1, Math.round(roi.h * scale));
 
-  let src, gray, blurred, edges, contours, hierarchy;
-  try {
-    src = cv.imread(proc);
+  proc.width  = procW;
+  proc.height = procH;
+  pctx.drawImage($('photo'), roi.x, roi.y, roi.w, roi.h, 0, 0, procW, procH);
+
+  // 半径レンジ：短辺基準で上限を厳しく
+  const shortSide = Math.min(procW, procH);
+  const minR    = Math.max(3,     Math.round(shortSide / 25));
+  const maxR    = Math.max(minR+2, Math.round(shortSide / 4));
+  const minDist = Math.max(minR*2, Math.round(minR * 2.2));
+
+  let src, gray, blur;
+  try{
+    src  = cv.imread(proc);
     gray = new cv.Mat();
+    blur = new cv.Mat();
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-    
-    blurred = new cv.Mat();
-    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
-    
-    edges = new cv.Mat();
-    cv.Canny(blurred, edges, 50, 150);
+    cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 1.2);
 
-    contours = new cv.MatVector();
-    hierarchy = new cv.Mat();
-    cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+    // 6ステップスイープ
+    const counts = [];
+    const circs  = [];
+    for(let i = 0; i < P2_LIST.length; i++){
+      const c = new cv.Mat();
+      cv.HoughCircles(blur, c, cv.HOUGH_GRADIENT,
+        1.0, minDist, 50, P2_LIST[i], minR, maxR);
+      counts.push(c.cols);
+      circs.push(c);
+    }
 
-    lastCircles = [];
-    for (let i = 0; i < contours.size(); ++i) {
-      let cnt = contours.get(i);
-      let area = cv.contourArea(cnt);
-      let circle = cv.minEnclosingCircle(cnt);
-      let circleArea = Math.PI * circle.radius * circle.radius;
-      
-      // 円形度と面積でフィルタリング（Manus提案のロジック）
-      if (area > 20 && (area / circleArea) > 0.6) {
-        lastCircles.push({ cx: circle.center.x, cy: circle.center.y, r: circle.radius });
+    // 安定点選択：増加が鈍化した点を採用
+    let bestIdx = 0;
+    let start = -1;
+    for(let i = 0; i < counts.length; i++){
+      if(counts[i] > 0){ start = i; break; }
+    }
+    if(start >= 0){
+      bestIdx = start;
+      for(let i = start+1; i < counts.length-1; i++){
+        const prev = counts[i]   - counts[i-1];
+        const next = counts[i+1] - counts[i];
+        if(prev > 0 && next < prev * 0.4){
+          bestIdx = i;
+          break;
+        }
+        bestIdx = i;
       }
     }
 
+    // 結果保存
+    lastCircles = [];
+    const best = circs[bestIdx];
+    for(let i = 0; i < best.cols; i++){
+      lastCircles.push({
+        cx: best.data32F[i*3],
+        cy: best.data32F[i*3+1],
+        r:  best.data32F[i*3+2],
+      });
+    }
+    circs.forEach(c => c.delete());
+
     $('count-num').textContent = lastCircles.length;
-    syncOv(); 
+    syncOv();
     drawResult();
 
-  } catch (e) {
+    if(lastCircles.length === 0)
+      showHint('検知なし ― 端面の断面だけを囲んで「範囲選び直し」してください。');
+    else
+      hideHint();
+
+  }catch(e){
     console.error(e);
-    showErr("解析失敗");
-  } finally {
-    if (src) src.delete(); if (gray) gray.delete(); if (blurred) blurred.delete();
-    if (edges) edges.delete(); if (contours) contours.delete(); if (hierarchy) hierarchy.delete();
+    $('count-num').textContent = '0';
+    showErr('解析エラー: ' + (e.message || e));
+    octx.clearRect(0, 0, $('overlay').width, $('overlay').height);
+  }finally{
+    if(src)  src.delete();
+    if(gray) gray.delete();
+    if(blur) blur.delete();
     hideSpinner();
   }
 }
 
-// ── 描画 ──
+// ── 結果描画 ──────────────────────────────────────────
 function drawResult(){
-  const photo=$('photo'), ov=$('overlay'), pr=photo.getBoundingClientRect();
-  const isx=pr.width/photo.naturalWidth, isy=pr.height/photo.naturalHeight;
-  const ox=roiRect.x*isx, oy=roiRect.y*isy;
-  const rw=roiRect.w*isx, rh=roiRect.h*isy;
-  const sx=rw/procW, sy=rh/procH, sc=(sx+sy)/2;
+  const photo = $('photo');
+  const ov    = $('overlay');
+  const pr    = photo.getBoundingClientRect();
+  const isx   = pr.width  / photo.naturalWidth;
+  const isy   = pr.height / photo.naturalHeight;
+  const ox = roiRect.x * isx;
+  const oy = roiRect.y * isy;
+  const rw = roiRect.w * isx;
+  const rh = roiRect.h * isy;
+  const sx = rw / procW;
+  const sy = rh / procH;
+  const sc = (sx + sy) / 2;
 
-  octx.clearRect(0,0,ov.width,ov.height);
-  octx.strokeStyle='rgba(136,255,68,.3)'; octx.lineWidth=1.5; octx.setLineDash([4,4]);
-  octx.strokeRect(ox,oy,rw,rh); octx.setLineDash([]);
+  octx.clearRect(0, 0, ov.width, ov.height);
+  octx.strokeStyle = 'rgba(136,255,68,.3)'; octx.lineWidth = 1.5; octx.setLineDash([4,4]);
+  octx.strokeRect(ox, oy, rw, rh); octx.setLineDash([]);
 
-  lastCircles.forEach((d,i)=>{
-    const cx=ox+d.cx*sx, cy=oy+d.cy*sy, r=d.r*sc;
-    octx.beginPath(); octx.arc(cx,cy,r,0,Math.PI*2);
-    octx.strokeStyle='#ff2222'; octx.lineWidth=2.5; octx.stroke();
-    octx.beginPath(); octx.arc(cx,cy,2,0,Math.PI*2);
-    octx.fillStyle='#ff2222'; octx.fill();
+  lastCircles.forEach((d, i)=>{
+    const cx = ox + d.cx * sx;
+    const cy = oy + d.cy * sy;
+    const r  = d.r * sc;
+    // グロー
+    octx.beginPath(); octx.arc(cx, cy, r+3, 0, Math.PI*2);
+    octx.strokeStyle = 'rgba(255,34,34,.18)'; octx.lineWidth = 8; octx.stroke();
+    // 赤枠
+    octx.beginPath(); octx.arc(cx, cy, r, 0, Math.PI*2);
+    octx.strokeStyle = '#ff2222'; octx.lineWidth = 2.5; octx.stroke();
+    // 中心点
+    octx.beginPath(); octx.arc(cx, cy, 2.5, 0, Math.PI*2);
+    octx.fillStyle = '#ff2222'; octx.fill();
+    // 番号
+    if(r >= 8){
+      const fs = Math.max(7, Math.min(r * .55, 15));
+      octx.font = `bold ${fs}px Arial`;
+      octx.textAlign = 'center'; octx.textBaseline = 'middle';
+      octx.fillStyle = 'rgba(0,0,0,.75)'; octx.fillText(i+1, cx+1, cy+1);
+      octx.fillStyle = '#fff';            octx.fillText(i+1, cx,   cy);
+    }
   });
 }
 
+// ── エッジ確認 ────────────────────────────────────────
 function drawEdge(){
-  if(!cvReady||!imgLoaded||!roiRect) return;
-  const roi=roiRect;
-  const scale=Math.min(1.0,PROC_MAX/Math.max(roi.w,roi.h));
-  const pw=Math.max(1,Math.round(roi.w*scale)), ph=Math.max(1,Math.round(roi.h*scale));
-  proc.width=pw; proc.height=ph;
-  pctx.drawImage($('photo'),roi.x,roi.y,roi.w,roi.h,0,0,pw,ph);
-  let src,gray,edges;
+  if(!cvReady || !imgLoaded || !roiRect) return;
+  const roi   = roiRect;
+  const scale = Math.min(1.0, PROC_MAX / Math.max(roi.w, roi.h));
+  const pw    = Math.max(1, Math.round(roi.w * scale));
+  const ph    = Math.max(1, Math.round(roi.h * scale));
+  proc.width  = pw;
+  proc.height = ph;
+  pctx.drawImage($('photo'), roi.x, roi.y, roi.w, roi.h, 0, 0, pw, ph);
+  let src, gray, blur, edges;
   try{
-    src=cv.imread(proc); gray=new cv.Mat(); edges=new cv.Mat();
-    cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
-    cv.Canny(gray,edges,50,150);
-    cv.imshow(proc,edges);
+    src   = cv.imread(proc);
+    gray  = new cv.Mat();
+    blur  = new cv.Mat();
+    edges = new cv.Mat();
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+    cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 1.2);
+    cv.Canny(blur, edges, 25, 70);
+    cv.imshow(proc, edges);
     syncOv();
-    const photo=$('photo'),ov=$('overlay'),pr=photo.getBoundingClientRect();
-    const isx=pr.width/photo.naturalWidth, isy=pr.height/photo.naturalHeight;
-    octx.clearRect(0,0,ov.width,ov.height);
-    octx.fillStyle='rgba(0,0,0,.8)'; octx.fillRect(0,0,ov.width,ov.height);
-    octx.drawImage(proc,0,0,pw,ph,roi.x*isx,roi.y*isy,roi.w*isx,roi.h*isy);
-  }catch(e){console.error(e);}
-  finally{ if(src)src.delete(); if(gray)gray.delete(); if(edges)edges.delete(); }
+    const photo = $('photo');
+    const ov    = $('overlay');
+    const pr    = photo.getBoundingClientRect();
+    const isx   = pr.width  / photo.naturalWidth;
+    const isy   = pr.height / photo.naturalHeight;
+    const ox = roi.x * isx, oy = roi.y * isy;
+    const dw = roi.w * isx, dh = roi.h * isy;
+    octx.clearRect(0, 0, ov.width, ov.height);
+    octx.fillStyle = 'rgba(0,0,0,.68)'; octx.fillRect(0, 0, ov.width, ov.height);
+    octx.drawImage(proc, 0, 0, pw, ph, ox, oy, dw, dh);
+    octx.strokeStyle = 'rgba(136,255,68,.4)'; octx.lineWidth = 1.5; octx.setLineDash([4,4]);
+    octx.strokeRect(ox, oy, dw, dh); octx.setLineDash([]);
+    showHint('エッジ確認：端面の縁がリング状に白く出ていればOKです。');
+  }catch(e){ console.error(e); }
+  finally{
+    if(src)   src.delete();
+    if(gray)  gray.delete();
+    if(blur)  blur.delete();
+    if(edges) edges.delete();
+  }
 }
 
+// ── リセット ──────────────────────────────────────────
 function resetAll(){
-  $('res-screen').style.display='none'; $('sel-screen').style.display='none';
-  $('home').style.display='flex';
+  $('res-screen').style.display = 'none';
+  $('sel-screen').style.display = 'none';
+  $('home').style.display = 'flex';
   imgLoaded=false; edgeMode=false; lastCircles=[]; roiRect=null; selStart=selEnd=null;
-  $('input-camera').value=''; $('input-gallery').value='';
+  $('edge-btn').classList.remove('on');
+  hideErr(); hideHint();
+  $('input-camera').value  = '';
+  $('input-gallery').value = '';
 }
 
+// ── ヘルパー ──────────────────────────────────────────
 function showSpinner(m){ $('spinner').classList.remove('hidden'); $('spin-msg').textContent=m; }
-function hideSpinner() { $('spinner').classList.add('hidden'); }
-function showErr(m)    { const e=$('err-box'); e.textContent=m; e.style.display='block'; }
-function hideErr()     { $('err-box').style.display='none'; }
-function hideHint()    { $('hint').style.display='none'; }
+function hideSpinner()  { $('spinner').classList.add('hidden'); }
+function showErr(m)     { const e=$('err-box'); e.textContent=m; e.style.display='block'; }
+function hideErr()      { $('err-box').style.display='none'; }
+function showHint(m)    { const h=$('hint'); h.textContent=m; h.style.display='block'; }
+function hideHint()     { $('hint').style.display='none'; }
 
-window.addEventListener('resize',()=>{
-  if($('sel-screen').style.display!=='none'){ syncSelCv(); return; }
-  if(!imgLoaded||$('res-screen').style.display==='none') return;
-  syncOv(); edgeMode?drawEdge():drawResult();
+window.addEventListener('resize', ()=>{
+  if($('sel-screen').style.display !== 'none'){ syncSelCv(); return; }
+  if(!imgLoaded || $('res-screen').style.display === 'none') return;
+  syncOv();
+  edgeMode ? drawEdge() : drawResult();
 });
+</script>
+</body>
+</html>
