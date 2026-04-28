@@ -316,12 +316,13 @@ function runDetect(){
   proc.height = procH;
   pctx.drawImage($('photo'), roi.x, roi.y, roi.w, roi.h, 0, 0, procW, procH);
 
-  // 半径レンジ：ROIの高さ(procH)を基準にする
-  // 棒1本の直径 ≒ ROI高さの 1/2〜1/4 → 半径は 1/4〜1/8
+  // 半径レンジ：procH基準
+  // 棒の直径 ≈ procH の 1/2〜1/1（1〜2段積み想定）
+  // → 半径は procH/4 〜 procH/2
   const refH    = procH;
-  const minR    = Math.max(4, Math.round(refH / 9));
-  const maxR    = Math.max(minR + 3, Math.round(refH / 3));
-  const minDist = Math.round(minR * 2.0);
+  const minR    = Math.max(4, Math.round(refH / 8));   // 小径棒対応
+  const maxR    = Math.round(refH * 0.48);              // 最大でも直径≒ROI高さ
+  const minDist = Math.max(minR * 2, Math.round(refH / 4)); // 棒の直径相当
 
   let src, gray, blur;
   try{
@@ -417,16 +418,11 @@ function drawResult(){
   lastCircles.forEach((d)=>{
     const cx = ox + d.cx * sx;
     const cy = oy + d.cy * sy;
-    const r  = d.r * sc;
-    // グロー
-    octx.beginPath(); octx.arc(cx, cy, r+3, 0, Math.PI*2);
-    octx.strokeStyle = 'rgba(255,34,34,.18)'; octx.lineWidth = 8; octx.stroke();
-    // 赤枠
-    octx.beginPath(); octx.arc(cx, cy, r, 0, Math.PI*2);
-    octx.strokeStyle = '#ff2222'; octx.lineWidth = 2; octx.stroke();
-    // 中心点のみ（番号なし）
-    octx.beginPath(); octx.arc(cx, cy, 2.5, 0, Math.PI*2);
-    octx.fillStyle = '#ff2222'; octx.fill();
+    // 中心点のみ（赤い円なし）
+    octx.beginPath(); octx.arc(cx, cy, 4, 0, Math.PI*2);
+    octx.fillStyle = 'rgba(255,34,34,0.85)'; octx.fill();
+    octx.beginPath(); octx.arc(cx, cy, 4, 0, Math.PI*2);
+    octx.strokeStyle = '#fff'; octx.lineWidth = 1; octx.stroke();
   });
 }
 
