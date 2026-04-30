@@ -272,18 +272,42 @@ function chkSel(){
   $('sel-go').disabled = (Math.abs(selEnd.x-selStart.x)<20 || Math.abs(selEnd.y-selStart.y)<20);
 }
 
+// ── object-fit:contain の実際の描画領域を取得 ────────
+// getBoundingClientRect() は要素ボックス全体を返すが
+// contain では黒帯が生じるため実際の画像位置とずれる
+function getContainSize(el){
+  const pr   = el.getBoundingClientRect();
+  const natW = el.naturalWidth, natH = el.naturalHeight;
+  const boxW = pr.width,        boxH = pr.height;
+  const natAR = natW / natH;
+  const boxAR = boxW / boxH;
+  let rW, rH, offX, offY;
+  if(natAR > boxAR){
+    // 横長画像 → 幅に合わせ、上下に黒帯
+    rW = boxW; rH = boxW / natAR;
+    offX = 0;             offY = (boxH - rH) / 2;
+  } else {
+    // 縦長画像 → 高さに合わせ、左右に黒帯
+    rH = boxH; rW = boxH * natAR;
+    offX = (boxW - rW) / 2; offY = 0;
+  }
+  return { rW, rH, offX, offY,
+           scaleX: natW / rW, scaleY: natH / rH };
+}
+
 function confirmROI(){
   const img = $('sel-img');
-  const pr  = img.getBoundingClientRect();
-  const sx  = img.naturalWidth  / pr.width;
-  const sy  = img.naturalHeight / pr.height;
+  // object-fit:contain の実サイズ・オフセットを考慮
+  const { offX, offY, scaleX, scaleY } = getContainSize(img);
   const x = Math.min(selStart.x, selEnd.x);
   const y = Math.min(selStart.y, selEnd.y);
   const w = Math.abs(selEnd.x - selStart.x);
   const h = Math.abs(selEnd.y - selStart.y);
   roiRect = {
-    x: Math.round(x*sx), y: Math.round(y*sy),
-    w: Math.round(w*sx), h: Math.round(h*sy)
+    x: Math.max(0, Math.round((x - offX) * scaleX)),
+    y: Math.max(0, Math.round((y - offY) * scaleY)),
+    w: Math.round(w * scaleX),
+    h: Math.round(h * scaleY)
   };
   $('sel-screen').style.display = 'none';
   $('res-screen').style.display = 'flex';
@@ -400,11 +424,13 @@ function runDetect(){
 function drawResult(){
   const photo = $('photo');
   const ov    = $('overlay');
-  const pr    = photo.getBoundingClientRect();
-  const isx   = pr.width  / photo.naturalWidth;
-  const isy   = pr.height / photo.naturalHeight;
-  const ox = roiRect.x * isx;
-  const oy = roiRect.y * isy;
+  // object-fit:contain の実描画領域を取得
+  const { rW, rH, offX, offY } = getContainSize(photo);
+  const isx = rW / photo.naturalWidth;
+  const isy = rH / photo.naturalHeight;
+  // ROI の表示座標（黒帯オフセット込み）
+  const ox = offX + roiRect.x * isx;
+  const oy = offY + roiRect.y * isy;
   const rw = roiRect.w * isx;
   const rh = roiRect.h * isy;
   const sx = rw / procW;
@@ -449,11 +475,13 @@ function drawEdge(){
     syncOv();
     const photo = $('photo');
     const ov    = $('overlay');
-    const pr    = photo.getBoundingClientRect();
-    const isx   = pr.width  / photo.naturalWidth;
-    const isy   = pr.height / photo.naturalHeight;
-    const ox = roi.x * isx, oy = roi.y * isy;
-    const dw = roi.w * isx, dh = roi.h * isy;
+    const { rW, rH, offX, offY } = getContainSize(photo);
+    const isx = rW / photo.naturalWidth;
+    const isy = rH / photo.naturalHeight;
+    const ox = offX + roi.x * isx;
+    const oy = offY + roi.y * isy;
+    const dw = roi.w * isx;
+    const dh = roi.h * isy;
     octx.clearRect(0, 0, ov.width, ov.height);
     octx.fillStyle = 'rgba(0,0,0,.68)'; octx.fillRect(0, 0, ov.width, ov.height);
     octx.drawImage(proc, 0, 0, pw, ph, ox, oy, dw, dh);
