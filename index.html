@@ -176,27 +176,12 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 
 <div id="cv-tag">CV…</div>
 
-<!-- 読み込みエラー回避のため高速なjsDelivr CDNに変更 -->
-<script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0-release.3/opencv.js"
-  onload="onCvReady()" onerror="onCvError()"></script>
+<!-- 安定した単一ビルドのOpenCV.js CDN -->
+<script async src="https://cdn.jsdelivr.net/npm/opencv-browser@1.0.0/opencv.js"
+  onload="onScriptLoad()" onerror="onCvError()"></script>
 <script>
 // ══════════════════════════════════════════════════════
 //  1枚の view-cv キャンバスに「全画像＋点」を描く方式
-//
-//  座標変換:
-//  ① sel-img 表示 → 自然座標（confirmROI）
-//     selScale = naturalW / sel-img.width
-//
-//  ② 自然座標 → view-cv 描画座標（drawFull）
-//     fullImg を img-wrap いっぱいに描画しスケール計算
-//     photoX,photoY,photoW,photoH を共有変数に保持
-//
-//  ③ proc座標 → 自然座標 → view-cv 描画座標（drawDots）
-//     naturalCX = roiRect.x + cx/procW*roiRect.w
-//     displayCX = photoX + naturalCX*(photoW/naturalW)
-//
-//  全ステップが同じ fullImg と img-wrap を参照するため
-//  座標ずれは発生しない。
 // ══════════════════════════════════════════════════════
 
 const PROC_MAX = 600;
@@ -205,7 +190,6 @@ const P2_LIST  = [40, 30, 22, 16, 12];
 let cvReady=false, imgLoaded=false, edgeMode=false;
 let roiRect=null, lastCircles=[], procW=0, procH=0;
 let selStart=null, selEnd=null, dragging=false;
-// view-cv 上での写真描画領域（drawFull で更新）
 let photoX=0, photoY=0, photoW=0, photoH=0;
 
 const $   = id => document.getElementById(id);
@@ -216,13 +200,38 @@ const pctx    = proc.getContext('2d', {willReadFrequently:true});
 const vctx    = viewCv.getContext('2d');
 const sctx    = $('sel-cv').getContext('2d');
 
-// ── OpenCV ────────────────────────────────────────────
+// ── OpenCV 初期化検知 ──────────────────────────────────
+function onScriptLoad(){
+  if (typeof cv !== 'undefined' && cv.Mat) {
+    onCvReady();
+  } else if (typeof cv !== 'undefined') {
+    cv['onRuntimeInitialized'] = () => {
+      onCvReady();
+    };
+  } else {
+    setTimeout(checkCv, 200);
+  }
+}
+
+function checkCv(){
+  if (typeof cv !== 'undefined' && cv.Mat) {
+    onCvReady();
+  } else {
+    setTimeout(checkCv, 200);
+  }
+}
+
 function onCvReady(){
-  cvReady=true; $('cv-badge').textContent='準備完了'; $('cv-badge').className='ok';$('cv-tag').textContent='CV OK';
+  if(cvReady) return;
+  cvReady=true;
+  $('cv-badge').textContent='準備完了';
+  $('cv-badge').className='ok';$('cv-tag').textContent='CV OK';
   if(imgLoaded && roiRect) runDetect();
 }
+
 function onCvError(){
-  $('cv-badge').textContent='CV 読み込み失敗'; $('cv-badge').className='err';
+  $('cv-badge').textContent='CV 読み込み失敗';
+  $('cv-badge').className='err';
 }
 
 // ── ボタン ────────────────────────────────────────────
@@ -320,7 +329,6 @@ function chkSel(){
 function confirmROI(){
   const img = $('sel-img');
   const pr  = img.getBoundingClientRect();
-  // sel-img は max-width/max-height 自動サイズ → 要素サイズ = 実描画サイズ
   const sx  = img.naturalWidth  / pr.width;
   const sy  = img.naturalHeight / pr.height;
   const x=Math.min(selStart.x,selEnd.x), y=Math.min(selStart.y,selEnd.y);
@@ -367,7 +375,6 @@ function runDetect(){
       counts.push(c.cols); circs.push(c);
     }
 
-    // 安定点選択
     let bestIdx=0, start=-1;
     for(let i=0;i<counts.length;i++){ if(counts[i]>0){start=i;break;} }
     if(start>=0){
@@ -404,7 +411,6 @@ function runDetect(){
 }
 
 // ── 全画像 + 点を view-cv に描画 ──────────────────────
-// showDots=true のとき点も描く
 function drawFull(showDots){
   const wrap = $('img-wrap').getBoundingClientRect();
   viewCv.width  = Math.round(wrap.width);
@@ -420,7 +426,6 @@ function drawFull(showDots){
   vctx.fillRect(0,0,viewCv.width,viewCv.height);
   vctx.drawImage(fullImg, photoX, photoY, photoW, photoH);
 
-  // ROI 枠
   if(roiRect){
     const rx = photoX + roiRect.x * s;
     const ry = photoY + roiRect.y * s;
@@ -432,8 +437,6 @@ function drawFull(showDots){
 
   if(!showDots) return;
 
-  // 点を描く
-  // proc座標 → 自然座標 → view-cv 座標
   lastCircles.forEach(d=>{
     const natCX = roiRect.x + d.cx / procW * roiRect.w;
     const natCY = roiRect.y + d.cy / procH * roiRect.h;
@@ -464,7 +467,6 @@ function drawEdge(){
     cv.Canny(blur,edges,25,70);
     cv.imshow(proc,edges);
 
-    // 全画像に暗いフィルターをかけ、ROI部分にエッジを重ねる
     drawFull(false);
     const wrap = $('img-wrap').getBoundingClientRect();
     const s    = Math.min(wrap.width/fullImg.naturalWidth, wrap.height/fullImg.naturalHeight);
