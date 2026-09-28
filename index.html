@@ -176,7 +176,8 @@ html,body{width:100%;height:100%;background:#111;overflow:hidden;
 
 <div id="cv-tag">CV…</div>
 
-<script async src="https://docs.opencv.org/4.8.0/opencv.js"
+<!-- 読み込みエラー回避のため高速なjsDelivr CDNに変更 -->
+<script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0-release.3/opencv.js"
   onload="onCvReady()" onerror="onCvError()"></script>
 <script>
 // ══════════════════════════════════════════════════════
@@ -217,8 +218,7 @@ const sctx    = $('sel-cv').getContext('2d');
 
 // ── OpenCV ────────────────────────────────────────────
 function onCvReady(){
-  cvReady=true; $('cv-badge').textContent='準備完了'; $('cv-badge').className='ok';
-  $('cv-tag').textContent='CV OK';
+  cvReady=true; $('cv-badge').textContent='準備完了'; $('cv-badge').className='ok';$('cv-tag').textContent='CV OK';
   if(imgLoaded && roiRect) runDetect();
 }
 function onCvError(){
@@ -228,8 +228,7 @@ function onCvError(){
 // ── ボタン ────────────────────────────────────────────
 $('btn-camera') .addEventListener('click', ()=>$('input-camera') .click());
 $('btn-gallery').addEventListener('click', ()=>$('input-gallery').click());
-$('input-camera') .addEventListener('change', e=>loadFile(e.target.files[0]));
-$('input-gallery').addEventListener('change', e=>loadFile(e.target.files[0]));
+$('input-camera') .addEventListener('change', e=>loadFile(e.target.files[0]));$('input-gallery').addEventListener('change', e=>loadFile(e.target.files[0]));
 
 $('rerun-btn').addEventListener('click', ()=>{
   if(!imgLoaded||!cvReady||!roiRect) return;
@@ -237,16 +236,13 @@ $('rerun-btn').addEventListener('click', ()=>{
   hideHint(); showSpinner('解析中…'); $('count-num').textContent='…';
   setTimeout(runDetect, 20);
 });
-$('resel-btn').addEventListener('click', goToSelect);
-$('edge-btn').addEventListener('click', ()=>{
+$('resel-btn').addEventListener('click', goToSelect);$('edge-btn').addEventListener('click', ()=>{
   if(!imgLoaded||!roiRect) return;
   edgeMode=!edgeMode; $('edge-btn').classList.toggle('on', edgeMode);
   edgeMode ? drawEdge() : drawFull(true);
 });
 $('back-btn').addEventListener('click', resetAll);
-$('sel-back').addEventListener('click', resetAll);
-$('sel-reset').addEventListener('click', ()=>{ selStart=selEnd=null; drawSel(); $('sel-go').disabled=true; });
-$('sel-go').addEventListener('click', confirmROI);
+$('sel-back').addEventListener('click', resetAll);$('sel-reset').addEventListener('click', ()=>{ selStart=selEnd=null; drawSel(); $('sel-go').disabled=true; });$('sel-go').addEventListener('click', confirmROI);
 
 // ── ファイル読み込み ──────────────────────────────────
 function loadFile(file){
@@ -268,8 +264,7 @@ function loadFile(file){
 // ── ROI選択 ───────────────────────────────────────────
 function goToSelect(){
   $('home').style.display='none';
-  $('res-screen').style.display='none';
-  $('sel-screen').style.display='flex';
+  $('res-screen').style.display='none';$('sel-screen').style.display='flex';
   selStart=selEnd=null; $('sel-go').disabled=true;
   requestAnimationFrame(()=>requestAnimationFrame(syncSelCv));
 }
@@ -337,8 +332,7 @@ function confirmROI(){
     h: Math.round(h*sy)
   };
   $('sel-screen').style.display='none';
-  $('res-screen').style.display='flex';
-  $('count-num').textContent='…';
+  $('res-screen').style.display='flex';$('count-num').textContent='…';
   edgeMode=false; $('edge-btn').classList.remove('on');
   hideHint();
   showSpinner(cvReady?'解析中…':'CV読み込み待機中…');
@@ -492,14 +486,13 @@ function drawEdge(){
 
 // ── リセット ──────────────────────────────────────────
 function resetAll(){
-  $('res-screen').style.display='none'; $('sel-screen').style.display='none';
-  $('home').style.display='flex';
+  $('res-screen').style.display='none'; $('sel-screen').style.display='none';$('home').style.display='flex';
   imgLoaded=false; edgeMode=false; lastCircles=[]; roiRect=null; selStart=selEnd=null;
   $('edge-btn').classList.remove('on'); hideErr(); hideHint();
-  $('input-camera').value=''; $('input-gallery').value='';
+  $('input-camera').value='';$('input-gallery').value='';
 }
 
-function showSpinner(m){ $('spinner').classList.remove('hidden'); $('spin-msg').textContent=m; }
+function showSpinner(m){ $('spinner').classList.remove('hidden');$('spin-msg').textContent=m; }
 function hideSpinner()  { $('spinner').classList.add('hidden'); }
 function showErr(m)     { const e=$('err-box'); e.textContent=m; e.style.display='block'; }
 function hideErr()      { $('err-box').style.display='none'; }
